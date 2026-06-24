@@ -124,12 +124,12 @@ export default function Home() {
       {/* ── The two instruments ───────────────────────────────────────────── */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-5">
-          <div className="flex items-end justify-between gap-4 flex-wrap">
-            <div>
-              <span className="eyebrow">Two instruments</span>
-              <h2 className="mt-2 font-display text-3xl sm:text-4xl font-semibold tracking-tight text-ink">The brief, in two lenses</h2>
-            </div>
-            <p className="text-slate-600 max-w-sm text-sm">One reads the index. The other reads the shelf. Together they separate genuine cost pressure from margin.</p>
+          <div className="max-w-3xl">
+            <span className="eyebrow">Two instruments</span>
+            <h2 className="mt-2 font-display text-3xl sm:text-4xl font-semibold tracking-tight text-ink">
+              The brief, in two lenses:{" "}
+              <span className="font-normal text-slate-600 text-2xl sm:text-3xl">One reads the index. The other reads the shelf. Together they separate genuine cost pressure from margin.</span>
+            </h2>
           </div>
           <div className="mt-10 grid md:grid-cols-2 gap-6">
             {PILLARS.map((p) => (
