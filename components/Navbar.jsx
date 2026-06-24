@@ -13,6 +13,7 @@ const ICONS = {
   retail: ["M3 3v18h18", "M7 15l3-4 3 3 4-6"], // analytics bars
   trade: ["M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M3 12h18", "M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"], // globe / routes
   products: ["M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z", "M21 21l-4.3-4.3"], // search
+  briefing: ["M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z", "M14 2v6h6", "M9 13h6", "M9 17h6"], // document
   advisor: ["M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"], // chat
 };
 
@@ -22,6 +23,7 @@ const LINKS = [
   { href: "/dashboard", label: "Retail Analytics", icon: "retail" },
   { href: "/trade", label: "Trade Map", icon: "trade" },
   { href: "/products", label: "Products", icon: "products" },
+  { href: "/briefing", label: "Price Watch", icon: "briefing" },
 ];
 
 function Icon({ name, className = "w-6 h-6" }) {
@@ -70,7 +72,7 @@ export default function Navbar() {
   const isActive = (href) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
   return (
-    <header className="sticky top-0 z-50">
+    <header className="sticky top-0 z-50 print:hidden">
       {/* State bar */}
       <div className="bg-ink text-paper/90">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-9 flex items-center justify-between gap-3 text-[11px] font-mono tracking-wide">

@@ -168,7 +168,7 @@ export default function EconomistDock() {
         <button
           onClick={() => setOpen(true)}
           aria-label="Open the AI Price Economist"
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-[60] flex flex-col items-center gap-2 rounded-l-xl bg-ink text-paper pl-2.5 pr-2 py-4 shadow-lg ring-1 ring-amber-500/30 hover:bg-[#16271e] transition-colors cursor-pointer"
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-[60] flex flex-col items-center gap-2 rounded-l-xl bg-ink text-paper pl-2.5 pr-2 py-4 shadow-lg ring-1 ring-amber-500/30 hover:bg-[#16271e] transition-colors cursor-pointer print:hidden"
         >
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-70" />
@@ -187,7 +187,7 @@ export default function EconomistDock() {
       {/* Panel — dark intelligence terminal */}
       {open && (
         <aside
-          className="fixed top-0 right-0 bottom-0 z-[60] w-full sm:w-[400px] flex flex-col fade-in text-paper border-l border-white/10 shadow-2xl"
+          className="fixed top-0 right-0 bottom-0 z-[60] w-full sm:w-[400px] flex flex-col fade-in text-paper border-l border-white/10 shadow-2xl print:hidden"
           style={{ background: "#0c130f" }}
           aria-label="AI Price Economist"
         >

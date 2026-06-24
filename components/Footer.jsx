@@ -4,7 +4,7 @@ import EconomicPulseLogo from "@/components/EconomicPulseLogo";
 
 export default function Footer() {
   return (
-    <footer className="bg-ink text-paper/80 border-t border-amber-500/20">
+    <footer className="bg-ink text-paper/80 border-t border-amber-500/20 print:hidden">
       <div className="max-w-7xl mx-auto px-5 py-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
         <div className="sm:col-span-2 lg:col-span-1">
           <div className="flex items-center gap-3">

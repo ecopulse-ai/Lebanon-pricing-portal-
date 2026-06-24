@@ -65,6 +65,25 @@ export async function POST(req) {
   msgs.push({ role: "user", content: message });
 
   const encoder = new TextEncoder();
+  const startedAt = Date.now();
+  let answer = "";
+  const logQA = (status) => {
+    // Structured advisor Q&A log -> Vercel runtime logs. Product/ministry signal:
+    // what officials ask, on which page, and a preview of the reply.
+    try {
+      console.log(JSON.stringify({
+        type: "advisor_qa",
+        ts: new Date().toISOString(),
+        focus: focus || "general",
+        status,
+        ms: Date.now() - startedAt,
+        question: message.slice(0, 1000),
+        answerChars: answer.length,
+        answerPreview: answer.slice(0, 500),
+      }));
+    } catch { /* never let logging break the response */ }
+  };
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -85,14 +104,17 @@ export async function POST(req) {
 
         for await (const event of aiStream) {
           if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+            answer += event.delta.text;
             controller.enqueue(encoder.encode(event.delta.text));
           }
         }
+        logQA("ok");
         controller.close();
       } catch (err) {
         const msg = err?.status === 429
           ? "Rate limit — please wait a moment and try again."
           : (err?.message || "Error retrieving analysis.");
+        logQA(`error:${err?.status || "unknown"}`);
         controller.enqueue(encoder.encode(`\n\n⚠ ${msg}`));
         controller.close();
       }

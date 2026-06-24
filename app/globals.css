@@ -95,3 +95,11 @@ body {
 .scroll-thin::-webkit-scrollbar { width: 8px; height: 8px; }
 .scroll-thin::-webkit-scrollbar-thumb { background: #cbd5c4; border-radius: 9999px; }
 .scroll-thin::-webkit-scrollbar-track { background: transparent; }
+
+/* Print — clean briefing/PDF output */
+@media print {
+  html, body { background: #fff !important; }
+  main { padding: 0 !important; }
+  @page { margin: 14mm; }
+  .break-inside-avoid { break-inside: avoid; }
+}
