@@ -119,7 +119,7 @@ export default function Navbar() {
                       : "border-[rgba(18,32,25,0.16)] bg-white text-slate-700 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700 hover:shadow-md hover:-translate-y-0.5"
                   }`}
                 >
-                  <Icon name={l.icon} className={`w-6 h-6 ${active ? "" : "text-slate-500 group-hover:text-brand-600"} transition-colors`} />
+                  <Icon name={l.icon} className={`w-[34px] h-[34px] ${active ? "" : "text-slate-500 group-hover:text-brand-600"} transition-colors`} />
                   {l.label}
                 </Link>
               );
