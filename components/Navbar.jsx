@@ -24,24 +24,30 @@ const LINKS = [
   { href: "/products", label: "Products", icon: "products" },
 ];
 
-function Icon({ name, className = "w-5 h-5" }) {
+function Icon({ name, className = "w-6 h-6" }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
       {ICONS[name].map((d, i) => <path key={i} d={d} />)}
     </svg>
   );
 }
 
-// Cedar seal — the unit's mark.
+// Lebanese flag — the national mark beside the wordmark.
 export function Seal({ className = "w-9 h-9" }) {
   return (
-    <span className={`grid place-items-center rounded-full bg-ink text-amber-400 ring-1 ring-amber-500/40 ${className}`}>
-      <svg viewBox="0 0 24 24" className="w-1/2 h-1/2" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 3v18" />
-        <path d="M12 7c-2.2-2.4-5-2.6-7-2.2 1.6 1.2 2 2.6 1.4 3.8 1.8-.4 4 .2 5.6 1.6" />
-        <path d="M12 7c2.2-2.4 5-2.6 7-2.2-1.6 1.2-2 2.6-1.4 3.8-1.8-.4-4 .2-5.6 1.6" />
-        <path d="M12 12c-2.6-2.6-6-2.8-8.5-2.2 2 1.4 2.5 3 1.8 4.4 2.2-.5 4.9.2 6.7 2" />
-        <path d="M12 12c2.6-2.6 6-2.8 8.5-2.2-2 1.4-2.5 3-1.8 4.4-2.2-.5-4.9.2-6.7 2" />
+    <span className={`inline-grid place-items-center ${className}`}>
+      <svg viewBox="0 0 36 24" className="w-full h-auto rounded-[3px] ring-1 ring-black/10 shadow-sm" preserveAspectRatio="xMidYMid meet">
+        {/* red–white–red bands */}
+        <rect width="36" height="24" fill="#ffffff" />
+        <rect width="36" height="6" fill="#C8102E" />
+        <rect y="18" width="36" height="6" fill="#C8102E" />
+        {/* green cedar */}
+        <g fill="#007A3D">
+          <rect x="17.2" y="14.8" width="1.6" height="1.8" />
+          <polygon points="9.5,16 26.5,16 18,11.2" />
+          <polygon points="11.4,13.6 24.6,13.6 18,9.2" />
+          <polygon points="13.3,11.2 22.7,11.2 18,7.2" />
+        </g>
       </svg>
     </span>
   );
@@ -111,7 +117,7 @@ export default function Navbar() {
                       : "border-[rgba(18,32,25,0.16)] bg-white text-slate-700 hover:border-brand-400 hover:bg-brand-50 hover:text-brand-700 hover:shadow-md hover:-translate-y-0.5"
                   }`}
                 >
-                  <Icon name={l.icon} className={`w-5 h-5 ${active ? "" : "text-slate-400 group-hover:text-brand-600"} transition-colors`} />
+                  <Icon name={l.icon} className={`w-6 h-6 ${active ? "" : "text-slate-500 group-hover:text-brand-600"} transition-colors`} />
                   {l.label}
                 </Link>
               );
