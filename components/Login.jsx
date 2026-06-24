@@ -85,8 +85,6 @@ export default function Login() {
           >
             Sign in
           </button>
-
-          <p className="text-center text-[11px] text-paper/35 font-mono">Demo access — minister / lebanon2026</p>
         </form>
 
         <p className="mt-6 text-center text-[11px] text-paper/35">For official use. Authorized personnel only.</p>
