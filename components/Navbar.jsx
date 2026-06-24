@@ -60,8 +60,9 @@ function Logo() {
     <Link href="/" className="flex items-center gap-3 shrink-0">
       <Seal className="w-11 h-11" />
       <span className="leading-tight">
-        <span className="block text-xl font-bold tracking-tight font-display text-ink">Lebanon Prices</span>
-        <span className="block text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-slate-500">Intelligence Unit</span>
+        <span className="block text-2xl sm:text-[1.65rem] font-bold tracking-tight font-display text-ink">
+          Lebanon Prices: <span className="text-slate-600">Intelligence Unit</span>
+        </span>
       </span>
     </Link>
   );
