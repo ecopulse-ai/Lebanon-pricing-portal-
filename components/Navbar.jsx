@@ -30,10 +30,10 @@ export function Seal({ className = "w-9 h-9" }) {
 
 function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-3 shrink-0">
-      <Seal className="w-11 h-11" />
-      <span className="leading-tight">
-        <span className="block text-2xl sm:text-[1.65rem] font-bold tracking-tight font-display text-ink">
+    <Link href="/" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+      <Seal className="w-9 h-9 sm:w-11 sm:h-11 shrink-0" />
+      <span className="leading-tight min-w-0">
+        <span className="block text-base sm:text-2xl lg:text-[1.65rem] font-bold tracking-tight font-display text-ink">
           Lebanon Prices: <span className="text-slate-600">Intelligence Unit</span>
         </span>
       </span>
@@ -67,17 +67,17 @@ export default function Navbar() {
       {/* Brand + market ribbon + boxed navigation */}
       <div className="border-b border-[rgba(18,32,25,0.12)] bg-paper/90 backdrop-blur supports-[backdrop-filter]:bg-paper/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="h-[60px] flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
+          <div className="min-h-[60px] py-2 flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               {pathname !== "/" && (
                 <Link
                   href="/"
                   aria-label="Go back to all instruments"
                   title="Go back to all instruments"
-                  className="inline-flex items-center gap-2 rounded-lg border border-[rgba(18,32,25,0.16)] bg-white text-slate-700 hover:text-brand-700 hover:border-brand-400 hover:bg-brand-50 transition-colors shrink-0 cursor-pointer px-3 py-2"
+                  className="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-[rgba(18,32,25,0.16)] bg-white text-slate-700 hover:text-brand-700 hover:border-brand-400 hover:bg-brand-50 transition-colors shrink-0 cursor-pointer px-2.5 py-2"
                 >
-                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>
-                  <span className="font-bold text-lg">Go back</span>
+                  <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>
+                  <span className="hidden sm:inline font-bold text-lg">Go back</span>
                 </Link>
               )}
               <Logo />
