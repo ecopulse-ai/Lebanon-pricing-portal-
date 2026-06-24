@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Ticker from "@/components/Ticker";
 import EconomicPulseLogo from "@/components/EconomicPulseLogo";
+import LogoutButton from "@/components/LogoutButton";
 import { getTicker } from "@/lib/data";
 
 // Each destination gets a distinct icon.
@@ -18,7 +19,6 @@ const ICONS = {
 };
 
 const LINKS = [
-  { href: "/", label: "Home", icon: "home" },
   { href: "/cpi", label: "Daily CPI", icon: "cpi" },
   { href: "/dashboard", label: "Retail Analytics", icon: "retail" },
   { href: "/trade", label: "Trade Map", icon: "trade" },
@@ -85,7 +85,9 @@ export default function Navbar() {
           </span>
           <span className="inline-flex items-center gap-2 shrink-0">
             <EconomicPulseLogo imgClassName="h-5 w-auto bg-white rounded px-1 py-0.5" />
-            <span className="font-bold text-paper normal-case tracking-normal">Powered by AI · Economic Pulse</span>
+            <span className="hidden sm:inline font-bold text-paper normal-case tracking-normal">Powered by AI · Economic Pulse</span>
+            <span className="text-paper/25">·</span>
+            <LogoutButton />
           </span>
         </div>
       </div>

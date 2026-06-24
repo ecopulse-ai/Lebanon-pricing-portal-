@@ -3,6 +3,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import EconomistDock from "@/components/EconomistDock";
+import AuthGate from "@/components/AuthGate";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -46,10 +47,12 @@ export default function RootLayout({ children }) {
       className={`${fraunces.variable} ${inter.variable} ${plexMono.variable} h-full`}
     >
       <body className="min-h-full flex flex-col bg-paper text-ink">
-        <Navbar />
-        <main className="flex-1 flex flex-col min-h-0">{children}</main>
-        <Footer />
-        <EconomistDock />
+        <AuthGate>
+          <Navbar />
+          <main className="flex-1 flex flex-col min-h-0">{children}</main>
+          <Footer />
+          <EconomistDock />
+        </AuthGate>
       </body>
     </html>
   );
