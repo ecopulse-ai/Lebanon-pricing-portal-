@@ -1,0 +1,1353 @@
+{
+  "meta": {
+    "source": "standardized_master_enriched.csv",
+    "snapshotDates": [
+      "2026-06-21",
+      "2026-06-23"
+    ],
+    "rows": 132988,
+    "rawCategories": 160,
+    "currency": "USD",
+    "note": "Cross-sectional shelf snapshot across four Lebanese chains. Chains were collected on different days, so figures are positional (price level, availability, sourcing) — not a time series."
+  },
+  "totals": {
+    "tracedItems": 116230,
+    "tracedPct": 87.4,
+    "countries": 24,
+    "categories": 17,
+    "topSupplier": "Türkiye",
+    "topSupplierShare": 20.1,
+    "suezSharePct": 10.2,
+    "concentratedCategories": 10
+  },
+  "categories": [
+    {
+      "name": "Fresh Produce",
+      "tracedItems": 2488,
+      "topSource": "United States",
+      "topShare": 97.9,
+      "top3": [
+        {
+          "name": "United States",
+          "sharePct": 97.9
+        },
+        {
+          "name": "Netherlands",
+          "sharePct": 1.8
+        },
+        {
+          "name": "France",
+          "sharePct": 0.2
+        }
+      ],
+      "medianPrice": 2.0
+    },
+    {
+      "name": "Bakery",
+      "tracedItems": 2778,
+      "topSource": "Türkiye",
+      "topShare": 92.2,
+      "top3": [
+        {
+          "name": "Türkiye",
+          "sharePct": 92.2
+        },
+        {
+          "name": "Belgium",
+          "sharePct": 3.7
+        },
+        {
+          "name": "Hungary",
+          "sharePct": 1.3
+        }
+      ],
+      "medianPrice": 2.59
+    },
+    {
+      "name": "Home & Cleaning",
+      "tracedItems": 11575,
+      "topSource": "Egypt",
+      "topShare": 85.9,
+      "top3": [
+        {
+          "name": "Egypt",
+          "sharePct": 85.9
+        },
+        {
+          "name": "China",
+          "sharePct": 5.3
+        },
+        {
+          "name": "Italy",
+          "sharePct": 5.0
+        }
+      ],
+      "medianPrice": 3.26
+    },
+    {
+      "name": "Frozen",
+      "tracedItems": 6326,
+      "topSource": "Türkiye",
+      "topShare": 85.2,
+      "top3": [
+        {
+          "name": "Türkiye",
+          "sharePct": 85.2
+        },
+        {
+          "name": "Hungary",
+          "sharePct": 6.1
+        },
+        {
+          "name": "Saudi Arabia",
+          "sharePct": 5.2
+        }
+      ],
+      "medianPrice": 4.95
+    },
+    {
+      "name": "Tobacco",
+      "tracedItems": 1185,
+      "topSource": "Romania",
+      "topShare": 85.1,
+      "top3": [
+        {
+          "name": "Romania",
+          "sharePct": 85.1
+        },
+        {
+          "name": "Germany",
+          "sharePct": 14.9
+        }
+      ],
+      "medianPrice": 1.73
+    },
+    {
+      "name": "Personal Care & Beauty",
+      "tracedItems": 11726,
+      "topSource": "France",
+      "topShare": 81.6,
+      "top3": [
+        {
+          "name": "France",
+          "sharePct": 81.6
+        },
+        {
+          "name": "Egypt",
+          "sharePct": 10.0
+        },
+        {
+          "name": "Saudi Arabia",
+          "sharePct": 3.4
+        }
+      ],
+      "medianPrice": 3.19
+    },
+    {
+      "name": "Pet Care",
+      "tracedItems": 1373,
+      "topSource": "France",
+      "topShare": 81.0,
+      "top3": [
+        {
+          "name": "France",
+          "sharePct": 81.0
+        },
+        {
+          "name": "Thailand",
+          "sharePct": 6.9
+        },
+        {
+          "name": "India",
+          "sharePct": 4.0
+        }
+      ],
+      "medianPrice": 1.52
+    },
+    {
+      "name": "Alcohol",
+      "tracedItems": 3759,
+      "topSource": "United Kingdom",
+      "topShare": 80.7,
+      "top3": [
+        {
+          "name": "United Kingdom",
+          "sharePct": 80.7
+        },
+        {
+          "name": "France",
+          "sharePct": 11.1
+        },
+        {
+          "name": "Germany",
+          "sharePct": 7.6
+        }
+      ],
+      "medianPrice": 13.99
+    },
+    {
+      "name": "Snacks & Sweets",
+      "tracedItems": 20987,
+      "topSource": "Türkiye",
+      "topShare": 57.1,
+      "top3": [
+        {
+          "name": "Türkiye",
+          "sharePct": 57.1
+        },
+        {
+          "name": "Belgium",
+          "sharePct": 12.2
+        },
+        {
+          "name": "United States",
+          "sharePct": 9.7
+        }
+      ],
+      "medianPrice": 1.4
+    },
+    {
+      "name": "Dairy & Eggs",
+      "tracedItems": 5988,
+      "topSource": "Denmark",
+      "topShare": 51.6,
+      "top3": [
+        {
+          "name": "Denmark",
+          "sharePct": 51.6
+        },
+        {
+          "name": "Saudi Arabia",
+          "sharePct": 28.4
+        },
+        {
+          "name": "Hungary",
+          "sharePct": 14.5
+        }
+      ],
+      "medianPrice": 3.12
+    },
+    {
+      "name": "Grocery & Pantry",
+      "tracedItems": 28765,
+      "topSource": "Ireland",
+      "topShare": 48.6,
+      "top3": [
+        {
+          "name": "Ireland",
+          "sharePct": 48.6
+        },
+        {
+          "name": "United States",
+          "sharePct": 15.0
+        },
+        {
+          "name": "Türkiye",
+          "sharePct": 9.4
+        }
+      ],
+      "medianPrice": 2.75
+    },
+    {
+      "name": "Baby & Child",
+      "tracedItems": 823,
+      "topSource": "Czechia",
+      "topShare": 48.5,
+      "top3": [
+        {
+          "name": "Czechia",
+          "sharePct": 48.5
+        },
+        {
+          "name": "France",
+          "sharePct": 30.3
+        },
+        {
+          "name": "Egypt",
+          "sharePct": 6.1
+        }
+      ],
+      "medianPrice": 5.0
+    },
+    {
+      "name": "Beverages",
+      "tracedItems": 11805,
+      "topSource": "United Kingdom",
+      "topShare": 40.9,
+      "top3": [
+        {
+          "name": "United Kingdom",
+          "sharePct": 40.9
+        },
+        {
+          "name": "Brazil",
+          "sharePct": 19.7
+        },
+        {
+          "name": "France",
+          "sharePct": 10.1
+        }
+      ],
+      "medianPrice": 1.69
+    },
+    {
+      "name": "Home & Living",
+      "tracedItems": 297,
+      "topSource": "France",
+      "topShare": 35.0,
+      "top3": [
+        {
+          "name": "France",
+          "sharePct": 35.0
+        },
+        {
+          "name": "Brazil",
+          "sharePct": 11.1
+        },
+        {
+          "name": "United States",
+          "sharePct": 9.4
+        }
+      ],
+      "medianPrice": 5.37
+    },
+    {
+      "name": "Meat & Fish",
+      "tracedItems": 4875,
+      "topSource": "Brazil",
+      "topShare": 32.7,
+      "top3": [
+        {
+          "name": "Brazil",
+          "sharePct": 32.7
+        },
+        {
+          "name": "Hungary",
+          "sharePct": 24.4
+        },
+        {
+          "name": "Saudi Arabia",
+          "sharePct": 19.3
+        }
+      ],
+      "medianPrice": 4.95
+    },
+    {
+      "name": "Electronics & Appliances",
+      "tracedItems": 87,
+      "topSource": "Egypt",
+      "topShare": 31.0,
+      "top3": [
+        {
+          "name": "Egypt",
+          "sharePct": 31.0
+        },
+        {
+          "name": "France",
+          "sharePct": 26.4
+        },
+        {
+          "name": "Brazil",
+          "sharePct": 19.5
+        }
+      ],
+      "medianPrice": 35.0
+    },
+    {
+      "name": "Other / Mixed",
+      "tracedItems": 1393,
+      "topSource": "Hungary",
+      "topShare": 27.9,
+      "top3": [
+        {
+          "name": "Hungary",
+          "sharePct": 27.9
+        },
+        {
+          "name": "Saudi Arabia",
+          "sharePct": 18.0
+        },
+        {
+          "name": "United States",
+          "sharePct": 12.3
+        }
+      ],
+      "medianPrice": 3.99
+    }
+  ],
+  "countries": [
+    {
+      "name": "Türkiye",
+      "products": 23328,
+      "sharePct": 20.1,
+      "bloc": "Türkiye",
+      "route": "Direct East Med",
+      "chokepoints": [],
+      "dominantCategories": 3,
+      "monopolyCategories": 2,
+      "supplies": [
+        {
+          "category": "Snacks & Sweets",
+          "items": 11985,
+          "gripPct": 57.1
+        },
+        {
+          "category": "Frozen",
+          "items": 5387,
+          "gripPct": 85.2
+        },
+        {
+          "category": "Grocery & Pantry",
+          "items": 2691,
+          "gripPct": 9.4
+        },
+        {
+          "category": "Bakery",
+          "items": 2562,
+          "gripPct": 92.2
+        },
+        {
+          "category": "Dairy & Eggs",
+          "items": 259,
+          "gripPct": 4.3
+        },
+        {
+          "category": "Meat & Fish",
+          "items": 202,
+          "gripPct": 4.1
+        },
+        {
+          "category": "Other / Mixed",
+          "items": 140,
+          "gripPct": 10.1
+        },
+        {
+          "category": "Personal Care & Beauty",
+          "items": 36,
+          "gripPct": 0.3
+        },
+        {
+          "category": "Baby & Child",
+          "items": 31,
+          "gripPct": 3.8
+        }
+      ]
+    },
+    {
+      "name": "Ireland",
+      "products": 13992,
+      "sharePct": 12.0,
+      "bloc": "Europe & UK",
+      "route": "Atlantic → Gibraltar",
+      "chokepoints": [
+        "Gibraltar"
+      ],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Grocery & Pantry",
+          "items": 13992,
+          "gripPct": 48.6
+        }
+      ]
+    },
+    {
+      "name": "France",
+      "products": 13196,
+      "sharePct": 11.4,
+      "bloc": "Europe & UK",
+      "route": "Across Mediterranean",
+      "chokepoints": [],
+      "dominantCategories": 2,
+      "monopolyCategories": 2,
+      "supplies": [
+        {
+          "category": "Personal Care & Beauty",
+          "items": 9574,
+          "gripPct": 81.6
+        },
+        {
+          "category": "Beverages",
+          "items": 1198,
+          "gripPct": 10.1
+        },
+        {
+          "category": "Pet Care",
+          "items": 1112,
+          "gripPct": 81.0
+        },
+        {
+          "category": "Alcohol",
+          "items": 419,
+          "gripPct": 11.1
+        },
+        {
+          "category": "Grocery & Pantry",
+          "items": 330,
+          "gripPct": 1.1
+        },
+        {
+          "category": "Baby & Child",
+          "items": 249,
+          "gripPct": 30.3
+        },
+        {
+          "category": "Home & Living",
+          "items": 104,
+          "gripPct": 35.0
+        },
+        {
+          "category": "Home & Cleaning",
+          "items": 82,
+          "gripPct": 0.7
+        },
+        {
+          "category": "Other / Mixed",
+          "items": 78,
+          "gripPct": 5.6
+        }
+      ]
+    },
+    {
+      "name": "Egypt",
+      "products": 12656,
+      "sharePct": 10.9,
+      "bloc": "MENA",
+      "route": "Direct East Med",
+      "chokepoints": [],
+      "dominantCategories": 1,
+      "monopolyCategories": 1,
+      "supplies": [
+        {
+          "category": "Home & Cleaning",
+          "items": 9945,
+          "gripPct": 85.9
+        },
+        {
+          "category": "Personal Care & Beauty",
+          "items": 1173,
+          "gripPct": 10.0
+        },
+        {
+          "category": "Snacks & Sweets",
+          "items": 1158,
+          "gripPct": 5.5
+        },
+        {
+          "category": "Grocery & Pantry",
+          "items": 177,
+          "gripPct": 0.6
+        },
+        {
+          "category": "Other / Mixed",
+          "items": 63,
+          "gripPct": 4.5
+        },
+        {
+          "category": "Baby & Child",
+          "items": 50,
+          "gripPct": 6.1
+        },
+        {
+          "category": "Electronics & Appliances",
+          "items": 27,
+          "gripPct": 31.0
+        },
+        {
+          "category": "Home & Living",
+          "items": 26,
+          "gripPct": 8.8
+        }
+      ]
+    },
+    {
+      "name": "United States",
+      "products": 9429,
+      "sharePct": 8.1,
+      "bloc": "Americas",
+      "route": "Atlantic → Gibraltar",
+      "chokepoints": [
+        "Gibraltar"
+      ],
+      "dominantCategories": 1,
+      "monopolyCategories": 1,
+      "supplies": [
+        {
+          "category": "Grocery & Pantry",
+          "items": 4317,
+          "gripPct": 15.0
+        },
+        {
+          "category": "Fresh Produce",
+          "items": 2436,
+          "gripPct": 97.9
+        },
+        {
+          "category": "Snacks & Sweets",
+          "items": 2046,
+          "gripPct": 9.7
+        },
+        {
+          "category": "Other / Mixed",
+          "items": 171,
+          "gripPct": 12.3
+        },
+        {
+          "category": "Meat & Fish",
+          "items": 146,
+          "gripPct": 3.0
+        },
+        {
+          "category": "Personal Care & Beauty",
+          "items": 62,
+          "gripPct": 0.5
+        },
+        {
+          "category": "Beverages",
+          "items": 50,
+          "gripPct": 0.4
+        },
+        {
+          "category": "Frozen",
+          "items": 46,
+          "gripPct": 0.7
+        },
+        {
+          "category": "Dairy & Eggs",
+          "items": 39,
+          "gripPct": 0.7
+        },
+        {
+          "category": "Pet Care",
+          "items": 36,
+          "gripPct": 2.6
+        },
+        {
+          "category": "Home & Cleaning",
+          "items": 28,
+          "gripPct": 0.2
+        },
+        {
+          "category": "Home & Living",
+          "items": 28,
+          "gripPct": 9.4
+        }
+      ]
+    },
+    {
+      "name": "United Kingdom",
+      "products": 7964,
+      "sharePct": 6.9,
+      "bloc": "Europe & UK",
+      "route": "Atlantic → Gibraltar",
+      "chokepoints": [
+        "Gibraltar"
+      ],
+      "dominantCategories": 1,
+      "monopolyCategories": 1,
+      "supplies": [
+        {
+          "category": "Beverages",
+          "items": 4828,
+          "gripPct": 40.9
+        },
+        {
+          "category": "Alcohol",
+          "items": 3032,
+          "gripPct": 80.7
+        },
+        {
+          "category": "Pet Care",
+          "items": 36,
+          "gripPct": 2.6
+        },
+        {
+          "category": "Snacks & Sweets",
+          "items": 29,
+          "gripPct": 0.1
+        }
+      ]
+    },
+    {
+      "name": "Saudi Arabia",
+      "products": 6371,
+      "sharePct": 5.5,
+      "bloc": "Gulf & Asia",
+      "route": "Red Sea → Suez",
+      "chokepoints": [
+        "Suez"
+      ],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Dairy & Eggs",
+          "items": 1703,
+          "gripPct": 28.4
+        },
+        {
+          "category": "Snacks & Sweets",
+          "items": 1065,
+          "gripPct": 5.1
+        },
+        {
+          "category": "Meat & Fish",
+          "items": 941,
+          "gripPct": 19.3
+        },
+        {
+          "category": "Grocery & Pantry",
+          "items": 785,
+          "gripPct": 2.7
+        },
+        {
+          "category": "Beverages",
+          "items": 609,
+          "gripPct": 5.2
+        },
+        {
+          "category": "Personal Care & Beauty",
+          "items": 401,
+          "gripPct": 3.4
+        },
+        {
+          "category": "Frozen",
+          "items": 331,
+          "gripPct": 5.2
+        },
+        {
+          "category": "Other / Mixed",
+          "items": 251,
+          "gripPct": 18.0
+        },
+        {
+          "category": "Home & Cleaning",
+          "items": 222,
+          "gripPct": 1.9
+        },
+        {
+          "category": "Baby & Child",
+          "items": 25,
+          "gripPct": 3.0
+        }
+      ]
+    },
+    {
+      "name": "Belgium",
+      "products": 4870,
+      "sharePct": 4.2,
+      "bloc": "Europe & UK",
+      "route": "Atlantic → Gibraltar",
+      "chokepoints": [
+        "Gibraltar"
+      ],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Snacks & Sweets",
+          "items": 2570,
+          "gripPct": 12.2
+        },
+        {
+          "category": "Grocery & Pantry",
+          "items": 1382,
+          "gripPct": 4.8
+        },
+        {
+          "category": "Beverages",
+          "items": 459,
+          "gripPct": 3.9
+        },
+        {
+          "category": "Frozen",
+          "items": 137,
+          "gripPct": 2.2
+        },
+        {
+          "category": "Bakery",
+          "items": 103,
+          "gripPct": 3.7
+        },
+        {
+          "category": "Personal Care & Beauty",
+          "items": 83,
+          "gripPct": 0.7
+        },
+        {
+          "category": "Other / Mixed",
+          "items": 71,
+          "gripPct": 5.1
+        },
+        {
+          "category": "Meat & Fish",
+          "items": 41,
+          "gripPct": 0.8
+        }
+      ]
+    },
+    {
+      "name": "Denmark",
+      "products": 4548,
+      "sharePct": 3.9,
+      "bloc": "Europe & UK",
+      "route": "Atlantic → Gibraltar",
+      "chokepoints": [
+        "Gibraltar"
+      ],
+      "dominantCategories": 1,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Dairy & Eggs",
+          "items": 3090,
+          "gripPct": 51.6
+        },
+        {
+          "category": "Meat & Fish",
+          "items": 720,
+          "gripPct": 14.8
+        },
+        {
+          "category": "Grocery & Pantry",
+          "items": 488,
+          "gripPct": 1.7
+        },
+        {
+          "category": "Snacks & Sweets",
+          "items": 147,
+          "gripPct": 0.7
+        },
+        {
+          "category": "Other / Mixed",
+          "items": 52,
+          "gripPct": 3.7
+        }
+      ]
+    },
+    {
+      "name": "Brazil",
+      "products": 4200,
+      "sharePct": 3.6,
+      "bloc": "Americas",
+      "route": "Atlantic → Gibraltar",
+      "chokepoints": [
+        "Gibraltar"
+      ],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Beverages",
+          "items": 2327,
+          "gripPct": 19.7
+        },
+        {
+          "category": "Meat & Fish",
+          "items": 1592,
+          "gripPct": 32.7
+        },
+        {
+          "category": "Snacks & Sweets",
+          "items": 95,
+          "gripPct": 0.5
+        },
+        {
+          "category": "Home & Cleaning",
+          "items": 53,
+          "gripPct": 0.5
+        },
+        {
+          "category": "Other / Mixed",
+          "items": 38,
+          "gripPct": 2.7
+        },
+        {
+          "category": "Grocery & Pantry",
+          "items": 37,
+          "gripPct": 0.1
+        },
+        {
+          "category": "Home & Living",
+          "items": 33,
+          "gripPct": 11.1
+        }
+      ]
+    },
+    {
+      "name": "Hungary",
+      "products": 4077,
+      "sharePct": 3.5,
+      "bloc": "Europe & UK",
+      "route": "Adriatic → Med",
+      "chokepoints": [],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Meat & Fish",
+          "items": 1191,
+          "gripPct": 24.4
+        },
+        {
+          "category": "Snacks & Sweets",
+          "items": 876,
+          "gripPct": 4.2
+        },
+        {
+          "category": "Dairy & Eggs",
+          "items": 869,
+          "gripPct": 14.5
+        },
+        {
+          "category": "Other / Mixed",
+          "items": 388,
+          "gripPct": 27.9
+        },
+        {
+          "category": "Frozen",
+          "items": 386,
+          "gripPct": 6.1
+        },
+        {
+          "category": "Grocery & Pantry",
+          "items": 308,
+          "gripPct": 1.1
+        },
+        {
+          "category": "Bakery",
+          "items": 36,
+          "gripPct": 1.3
+        }
+      ]
+    },
+    {
+      "name": "India",
+      "products": 1692,
+      "sharePct": 1.5,
+      "bloc": "Gulf & Asia",
+      "route": "Arabian Sea → Suez",
+      "chokepoints": [
+        "Bab-el-Mandeb",
+        "Suez"
+      ],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Grocery & Pantry",
+          "items": 1323,
+          "gripPct": 4.6
+        },
+        {
+          "category": "Snacks & Sweets",
+          "items": 252,
+          "gripPct": 1.2
+        },
+        {
+          "category": "Pet Care",
+          "items": 55,
+          "gripPct": 4.0
+        },
+        {
+          "category": "Other / Mixed",
+          "items": 32,
+          "gripPct": 2.3
+        }
+      ]
+    },
+    {
+      "name": "Morocco",
+      "products": 1278,
+      "sharePct": 1.1,
+      "bloc": "MENA",
+      "route": "Across Mediterranean",
+      "chokepoints": [],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Grocery & Pantry",
+          "items": 609,
+          "gripPct": 2.1
+        },
+        {
+          "category": "Snacks & Sweets",
+          "items": 432,
+          "gripPct": 2.1
+        },
+        {
+          "category": "Beverages",
+          "items": 171,
+          "gripPct": 1.4
+        }
+      ]
+    },
+    {
+      "name": "Sri Lanka",
+      "products": 1197,
+      "sharePct": 1.0,
+      "bloc": "Gulf & Asia",
+      "route": "Indian Ocean → Suez",
+      "chokepoints": [
+        "Bab-el-Mandeb",
+        "Suez"
+      ],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Beverages",
+          "items": 1012,
+          "gripPct": 8.6
+        },
+        {
+          "category": "Personal Care & Beauty",
+          "items": 72,
+          "gripPct": 0.6
+        },
+        {
+          "category": "Snacks & Sweets",
+          "items": 49,
+          "gripPct": 0.2
+        },
+        {
+          "category": "Grocery & Pantry",
+          "items": 25,
+          "gripPct": 0.1
+        },
+        {
+          "category": "Home & Living",
+          "items": 25,
+          "gripPct": 8.4
+        }
+      ]
+    },
+    {
+      "name": "Netherlands",
+      "products": 1172,
+      "sharePct": 1.0,
+      "bloc": "Europe & UK",
+      "route": "Atlantic → Gibraltar",
+      "chokepoints": [
+        "Gibraltar"
+      ],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Beverages",
+          "items": 1038,
+          "gripPct": 8.8
+        },
+        {
+          "category": "Grocery & Pantry",
+          "items": 66,
+          "gripPct": 0.2
+        },
+        {
+          "category": "Fresh Produce",
+          "items": 45,
+          "gripPct": 1.8
+        }
+      ]
+    },
+    {
+      "name": "Italy",
+      "products": 1106,
+      "sharePct": 1.0,
+      "bloc": "Europe & UK",
+      "route": "Across Mediterranean",
+      "chokepoints": [],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Home & Cleaning",
+          "items": 575,
+          "gripPct": 5.0
+        },
+        {
+          "category": "Grocery & Pantry",
+          "items": 347,
+          "gripPct": 1.2
+        },
+        {
+          "category": "Personal Care & Beauty",
+          "items": 83,
+          "gripPct": 0.7
+        },
+        {
+          "category": "Baby & Child",
+          "items": 46,
+          "gripPct": 5.6
+        }
+      ]
+    },
+    {
+      "name": "Romania",
+      "products": 1009,
+      "sharePct": 0.9,
+      "bloc": "Europe & UK",
+      "route": "Black Sea → Bosphorus",
+      "chokepoints": [
+        "Bosphorus"
+      ],
+      "dominantCategories": 1,
+      "monopolyCategories": 1,
+      "supplies": [
+        {
+          "category": "Tobacco",
+          "items": 1009,
+          "gripPct": 85.1
+        }
+      ]
+    },
+    {
+      "name": "Oman",
+      "products": 860,
+      "sharePct": 0.7,
+      "bloc": "Gulf & Asia",
+      "route": "Hormuz → Suez",
+      "chokepoints": [
+        "Hormuz",
+        "Bab-el-Mandeb",
+        "Suez"
+      ],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Grocery & Pantry",
+          "items": 446,
+          "gripPct": 1.6
+        },
+        {
+          "category": "Snacks & Sweets",
+          "items": 235,
+          "gripPct": 1.1
+        },
+        {
+          "category": "Personal Care & Beauty",
+          "items": 101,
+          "gripPct": 0.9
+        },
+        {
+          "category": "Beverages",
+          "items": 51,
+          "gripPct": 0.4
+        }
+      ]
+    },
+    {
+      "name": "China",
+      "products": 720,
+      "sharePct": 0.6,
+      "bloc": "Gulf & Asia",
+      "route": "Malacca → Suez",
+      "chokepoints": [
+        "Malacca",
+        "Bab-el-Mandeb",
+        "Suez"
+      ],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Home & Cleaning",
+          "items": 610,
+          "gripPct": 5.3
+        },
+        {
+          "category": "Personal Care & Beauty",
+          "items": 83,
+          "gripPct": 0.7
+        }
+      ]
+    },
+    {
+      "name": "Ukraine",
+      "products": 624,
+      "sharePct": 0.5,
+      "bloc": "Europe & UK",
+      "route": "Black Sea → Bosphorus",
+      "chokepoints": [
+        "Bosphorus"
+      ],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Grocery & Pantry",
+          "items": 614,
+          "gripPct": 2.1
+        }
+      ]
+    },
+    {
+      "name": "Thailand",
+      "products": 579,
+      "sharePct": 0.5,
+      "bloc": "Gulf & Asia",
+      "route": "Malacca → Suez",
+      "chokepoints": [
+        "Malacca",
+        "Bab-el-Mandeb",
+        "Suez"
+      ],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Grocery & Pantry",
+          "items": 461,
+          "gripPct": 1.6
+        },
+        {
+          "category": "Pet Care",
+          "items": 95,
+          "gripPct": 6.9
+        }
+      ]
+    },
+    {
+      "name": "Germany",
+      "products": 552,
+      "sharePct": 0.5,
+      "bloc": "Europe & UK",
+      "route": "Atlantic → Gibraltar",
+      "chokepoints": [
+        "Gibraltar"
+      ],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Alcohol",
+          "items": 285,
+          "gripPct": 7.6
+        },
+        {
+          "category": "Tobacco",
+          "items": 176,
+          "gripPct": 14.9
+        },
+        {
+          "category": "Beverages",
+          "items": 51,
+          "gripPct": 0.4
+        },
+        {
+          "category": "Other / Mixed",
+          "items": 33,
+          "gripPct": 2.4
+        }
+      ]
+    },
+    {
+      "name": "Czechia",
+      "products": 422,
+      "sharePct": 0.4,
+      "bloc": "Europe & UK",
+      "route": "Atlantic → Gibraltar",
+      "chokepoints": [
+        "Gibraltar"
+      ],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Baby & Child",
+          "items": 399,
+          "gripPct": 48.5
+        }
+      ]
+    },
+    {
+      "name": "Iraq",
+      "products": 388,
+      "sharePct": 0.3,
+      "bloc": "Gulf & Asia",
+      "route": "Gulf → Hormuz → Suez",
+      "chokepoints": [
+        "Hormuz",
+        "Bab-el-Mandeb",
+        "Suez"
+      ],
+      "dominantCategories": 0,
+      "monopolyCategories": 0,
+      "supplies": [
+        {
+          "category": "Grocery & Pantry",
+          "items": 359,
+          "gripPct": 1.2
+        },
+        {
+          "category": "Snacks & Sweets",
+          "items": 27,
+          "gripPct": 0.1
+        }
+      ]
+    }
+  ],
+  "blocs": [
+    {
+      "name": "Europe & UK",
+      "products": 53532,
+      "sharePct": 46.1
+    },
+    {
+      "name": "Türkiye",
+      "products": 23328,
+      "sharePct": 20.1
+    },
+    {
+      "name": "MENA",
+      "products": 13934,
+      "sharePct": 12.0
+    },
+    {
+      "name": "Americas",
+      "products": 13629,
+      "sharePct": 11.7
+    },
+    {
+      "name": "Gulf & Asia",
+      "products": 11807,
+      "sharePct": 10.2
+    }
+  ],
+  "chokepoints": [
+    {
+      "name": "Gibraltar",
+      "products": 47149,
+      "sharePct": 40.6
+    },
+    {
+      "name": "Suez",
+      "products": 11807,
+      "sharePct": 10.2
+    },
+    {
+      "name": "Bab-el-Mandeb",
+      "products": 5436,
+      "sharePct": 4.7
+    },
+    {
+      "name": "Bosphorus",
+      "products": 1633,
+      "sharePct": 1.4
+    },
+    {
+      "name": "Malacca",
+      "products": 1299,
+      "sharePct": 1.1
+    },
+    {
+      "name": "Hormuz",
+      "products": 1248,
+      "sharePct": 1.1
+    }
+  ]
+}

@@ -1,0 +1,520 @@
+{
+  "meta": {
+    "source": "standardized_master_enriched.csv",
+    "snapshotDates": [
+      "2026-06-21",
+      "2026-06-23"
+    ],
+    "rows": 132988,
+    "rawCategories": 160,
+    "currency": "USD",
+    "note": "Cross-sectional shelf snapshot across four Lebanese chains. Chains were collected on different days, so figures are positional (price level, availability, sourcing) — not a time series."
+  },
+  "kpis": {
+    "products": 132988,
+    "retailers": 4,
+    "categories": 17,
+    "originCountries": 24,
+    "medianPrice": 2.95,
+    "meanPrice": 6.27,
+    "inStockRate": 68.8,
+    "tracedToOriginPct": 87.4
+  },
+  "retailers": [
+    {
+      "name": "Al-Makhazen",
+      "products": 62778,
+      "medianPrice": 2.55,
+      "meanPrice": 3.47,
+      "inStockRate": 54.3
+    },
+    {
+      "name": "Promarche",
+      "products": 40203,
+      "medianPrice": 2.99,
+      "meanPrice": 5.24,
+      "inStockRate": 74.5
+    },
+    {
+      "name": "Carrefour",
+      "products": 18205,
+      "medianPrice": 4.13,
+      "meanPrice": 15.49,
+      "inStockRate": 100.0
+    },
+    {
+      "name": "Spinneys",
+      "products": 11802,
+      "medianPrice": 3.99,
+      "meanPrice": 10.39,
+      "inStockRate": 78.6
+    }
+  ],
+  "categories": [
+    {
+      "name": "Grocery & Pantry",
+      "products": 31727,
+      "sharePct": 23.9,
+      "medianPrice": 2.75
+    },
+    {
+      "name": "Snacks & Sweets",
+      "products": 21440,
+      "sharePct": 16.1,
+      "medianPrice": 1.4
+    },
+    {
+      "name": "Home & Cleaning",
+      "products": 12390,
+      "sharePct": 9.3,
+      "medianPrice": 3.26
+    },
+    {
+      "name": "Personal Care & Beauty",
+      "products": 12090,
+      "sharePct": 9.1,
+      "medianPrice": 3.19
+    },
+    {
+      "name": "Beverages",
+      "products": 11805,
+      "sharePct": 8.9,
+      "medianPrice": 1.69
+    },
+    {
+      "name": "Frozen",
+      "products": 6331,
+      "sharePct": 4.8,
+      "medianPrice": 4.95
+    },
+    {
+      "name": "Meat & Fish",
+      "products": 6306,
+      "sharePct": 4.7,
+      "medianPrice": 4.95
+    },
+    {
+      "name": "Dairy & Eggs",
+      "products": 6008,
+      "sharePct": 4.5,
+      "medianPrice": 3.12
+    },
+    {
+      "name": "Home & Living",
+      "products": 5522,
+      "sharePct": 4.2,
+      "medianPrice": 5.37
+    },
+    {
+      "name": "Other / Mixed",
+      "products": 3887,
+      "sharePct": 2.9,
+      "medianPrice": 3.99
+    },
+    {
+      "name": "Alcohol",
+      "products": 3759,
+      "sharePct": 2.8,
+      "medianPrice": 13.99
+    },
+    {
+      "name": "Bakery",
+      "products": 2841,
+      "sharePct": 2.1,
+      "medianPrice": 2.59
+    },
+    {
+      "name": "Fresh Produce",
+      "products": 2523,
+      "sharePct": 1.9,
+      "medianPrice": 2.0
+    },
+    {
+      "name": "Pet Care",
+      "products": 2007,
+      "sharePct": 1.5,
+      "medianPrice": 1.52
+    },
+    {
+      "name": "Baby & Child",
+      "products": 1699,
+      "sharePct": 1.3,
+      "medianPrice": 5.0
+    },
+    {
+      "name": "Electronics & Appliances",
+      "products": 1467,
+      "sharePct": 1.1,
+      "medianPrice": 35.0
+    },
+    {
+      "name": "Tobacco",
+      "products": 1186,
+      "sharePct": 0.9,
+      "medianPrice": 1.73
+    }
+  ],
+  "cheapestByCategory": [
+    {
+      "category": "Fresh Produce",
+      "cheapest": "Carrefour",
+      "cheapestPrice": 1.01,
+      "dearest": "Spinneys",
+      "dearestPrice": 4.37,
+      "spreadPct": 333.0,
+      "byRetailer": {
+        "Al-Makhazen": 1.67,
+        "Promarche": 2.23,
+        "Carrefour": 1.01,
+        "Spinneys": 4.37
+      }
+    },
+    {
+      "category": "Home & Living",
+      "cheapest": "Promarche",
+      "cheapestPrice": 2.09,
+      "dearest": "Al-Makhazen",
+      "dearestPrice": 8.25,
+      "spreadPct": 295.0,
+      "byRetailer": {
+        "Al-Makhazen": 8.25,
+        "Promarche": 2.09,
+        "Carrefour": 6.51
+      }
+    },
+    {
+      "category": "Snacks & Sweets",
+      "cheapest": "Al-Makhazen",
+      "cheapestPrice": 1.05,
+      "dearest": "Spinneys",
+      "dearestPrice": 2.49,
+      "spreadPct": 137.0,
+      "byRetailer": {
+        "Al-Makhazen": 1.05,
+        "Promarche": 1.65,
+        "Spinneys": 2.49
+      }
+    },
+    {
+      "category": "Electronics & Appliances",
+      "cheapest": "Al-Makhazen",
+      "cheapestPrice": 15.0,
+      "dearest": "Carrefour",
+      "dearestPrice": 35.08,
+      "spreadPct": 134.0,
+      "byRetailer": {
+        "Al-Makhazen": 15.0,
+        "Promarche": 32.0,
+        "Carrefour": 35.08
+      }
+    },
+    {
+      "category": "Meat & Fish",
+      "cheapest": "Al-Makhazen",
+      "cheapestPrice": 3.71,
+      "dearest": "Spinneys",
+      "dearestPrice": 6.99,
+      "spreadPct": 88.0,
+      "byRetailer": {
+        "Al-Makhazen": 3.71,
+        "Promarche": 4.55,
+        "Spinneys": 6.99
+      }
+    },
+    {
+      "category": "Other / Mixed",
+      "cheapest": "Al-Makhazen",
+      "cheapestPrice": 2.62,
+      "dearest": "Carrefour",
+      "dearestPrice": 4.71,
+      "spreadPct": 80.0,
+      "byRetailer": {
+        "Al-Makhazen": 2.62,
+        "Promarche": 3.49,
+        "Carrefour": 4.71,
+        "Spinneys": 4.19
+      }
+    },
+    {
+      "category": "Pet Care",
+      "cheapest": "Al-Makhazen",
+      "cheapestPrice": 1.22,
+      "dearest": "Promarche",
+      "dearestPrice": 2.09,
+      "spreadPct": 71.0,
+      "byRetailer": {
+        "Al-Makhazen": 1.22,
+        "Promarche": 2.09
+      }
+    },
+    {
+      "category": "Beverages",
+      "cheapest": "Al-Makhazen",
+      "cheapestPrice": 1.65,
+      "dearest": "Spinneys",
+      "dearestPrice": 2.69,
+      "spreadPct": 63.0,
+      "byRetailer": {
+        "Al-Makhazen": 1.65,
+        "Promarche": 1.75,
+        "Carrefour": 1.91,
+        "Spinneys": 2.69
+      }
+    },
+    {
+      "category": "Frozen",
+      "cheapest": "Promarche",
+      "cheapestPrice": 4.2,
+      "dearest": "Spinneys",
+      "dearestPrice": 5.94,
+      "spreadPct": 41.0,
+      "byRetailer": {
+        "Al-Makhazen": 5.04,
+        "Promarche": 4.2,
+        "Carrefour": 5.02,
+        "Spinneys": 5.94
+      }
+    },
+    {
+      "category": "Bakery",
+      "cheapest": "Carrefour",
+      "cheapestPrice": 2.06,
+      "dearest": "Spinneys",
+      "dearestPrice": 2.87,
+      "spreadPct": 39.0,
+      "byRetailer": {
+        "Al-Makhazen": 2.25,
+        "Promarche": 2.75,
+        "Carrefour": 2.06,
+        "Spinneys": 2.87
+      }
+    },
+    {
+      "category": "Baby & Child",
+      "cheapest": "Promarche",
+      "cheapestPrice": 4.39,
+      "dearest": "Carrefour",
+      "dearestPrice": 5.97,
+      "spreadPct": 36.0,
+      "byRetailer": {
+        "Al-Makhazen": 5.2,
+        "Promarche": 4.39,
+        "Carrefour": 5.97
+      }
+    },
+    {
+      "category": "Grocery & Pantry",
+      "cheapest": "Al-Makhazen",
+      "cheapestPrice": 2.55,
+      "dearest": "Spinneys",
+      "dearestPrice": 3.44,
+      "spreadPct": 35.0,
+      "byRetailer": {
+        "Al-Makhazen": 2.55,
+        "Promarche": 2.75,
+        "Carrefour": 2.89,
+        "Spinneys": 3.44
+      }
+    },
+    {
+      "category": "Alcohol",
+      "cheapest": "Promarche",
+      "cheapestPrice": 12.5,
+      "dearest": "Spinneys",
+      "dearestPrice": 16.49,
+      "spreadPct": 32.0,
+      "byRetailer": {
+        "Promarche": 12.5,
+        "Carrefour": 15.03,
+        "Spinneys": 16.49
+      }
+    },
+    {
+      "category": "Home & Cleaning",
+      "cheapest": "Promarche",
+      "cheapestPrice": 3.19,
+      "dearest": "Carrefour",
+      "dearestPrice": 3.87,
+      "spreadPct": 21.0,
+      "byRetailer": {
+        "Al-Makhazen": 3.24,
+        "Promarche": 3.19,
+        "Carrefour": 3.87
+      }
+    },
+    {
+      "category": "Personal Care & Beauty",
+      "cheapest": "Carrefour",
+      "cheapestPrice": 2.96,
+      "dearest": "Promarche",
+      "dearestPrice": 3.39,
+      "spreadPct": 15.0,
+      "byRetailer": {
+        "Al-Makhazen": 3.1,
+        "Promarche": 3.39,
+        "Carrefour": 2.96
+      }
+    },
+    {
+      "category": "Tobacco",
+      "cheapest": "Al-Makhazen",
+      "cheapestPrice": 1.73,
+      "dearest": "Al-Makhazen",
+      "dearestPrice": 1.73,
+      "spreadPct": 0.0,
+      "byRetailer": {
+        "Al-Makhazen": 1.73,
+        "Promarche": 1.73
+      }
+    }
+  ],
+  "origins": [
+    {
+      "name": "Türkiye",
+      "products": 23328,
+      "sharePct": 20.1
+    },
+    {
+      "name": "Ireland",
+      "products": 13992,
+      "sharePct": 12.0
+    },
+    {
+      "name": "France",
+      "products": 13196,
+      "sharePct": 11.4
+    },
+    {
+      "name": "Egypt",
+      "products": 12656,
+      "sharePct": 10.9
+    },
+    {
+      "name": "United States",
+      "products": 9429,
+      "sharePct": 8.1
+    },
+    {
+      "name": "United Kingdom",
+      "products": 7964,
+      "sharePct": 6.9
+    },
+    {
+      "name": "Saudi Arabia",
+      "products": 6371,
+      "sharePct": 5.5
+    },
+    {
+      "name": "Belgium",
+      "products": 4870,
+      "sharePct": 4.2
+    },
+    {
+      "name": "Denmark",
+      "products": 4548,
+      "sharePct": 3.9
+    },
+    {
+      "name": "Brazil",
+      "products": 4200,
+      "sharePct": 3.6
+    },
+    {
+      "name": "Hungary",
+      "products": 4077,
+      "sharePct": 3.5
+    },
+    {
+      "name": "India",
+      "products": 1692,
+      "sharePct": 1.5
+    },
+    {
+      "name": "Other countries",
+      "products": 9907,
+      "sharePct": 8.5
+    }
+  ],
+  "priceBands": [
+    {
+      "name": "<$1",
+      "count": 21276,
+      "sharePct": 16.0
+    },
+    {
+      "name": "$1–2",
+      "count": 26438,
+      "sharePct": 19.9
+    },
+    {
+      "name": "$2–5",
+      "count": 50025,
+      "sharePct": 37.7
+    },
+    {
+      "name": "$5–10",
+      "count": 22459,
+      "sharePct": 16.9
+    },
+    {
+      "name": "$10–20",
+      "count": 7859,
+      "sharePct": 5.9
+    },
+    {
+      "name": "$20+",
+      "count": 4589,
+      "sharePct": 3.5
+    }
+  ],
+  "topBrands": [
+    {
+      "name": "Plein Soleil",
+      "products": 2546
+    },
+    {
+      "name": "Domo",
+      "products": 1809
+    },
+    {
+      "name": "Al Wadi Al Akhdar",
+      "products": 1256
+    },
+    {
+      "name": "Master",
+      "products": 1251
+    },
+    {
+      "name": "Makhazen",
+      "products": 1077
+    },
+    {
+      "name": "Ocean Garden",
+      "products": 1002
+    },
+    {
+      "name": "Candia",
+      "products": 807
+    },
+    {
+      "name": "Aruba",
+      "products": 760
+    },
+    {
+      "name": "Puidor",
+      "products": 742
+    },
+    {
+      "name": "Snips",
+      "products": 729
+    },
+    {
+      "name": "Abido",
+      "products": 712
+    },
+    {
+      "name": "Siblou",
+      "products": 708
+    }
+  ]
+}

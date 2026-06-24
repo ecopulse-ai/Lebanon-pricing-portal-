@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mizan — Lebanon Price Intelligence</title>
+  <meta name="description" content="Mizan tracks prices of goods across Lebanese online retail and wholesale stores, turning raw price data into clear analytics, inflation signals, and market insights." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Fira Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            mono: ['Fira Code', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            ink: '#0B1220',
+            brand: { 50:'#eff5ff',100:'#dbe7fe',500:'#3B82F6',600:'#2563eb',700:'#1E40AF',800:'#1e3a8a' },
+            amber: { 400:'#fbbf24',500:'#F59E0B',600:'#d97706' },
+            cedar: '#C8102E',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *{animation:none!important;transition:none!important} }
+    .grid-bg {
+      background-image:
+        radial-gradient(circle at 20% 0%, rgba(59,130,246,0.10), transparent 45%),
+        radial-gradient(circle at 90% 10%, rgba(245,158,11,0.10), transparent 40%),
+        linear-gradient(to right, rgba(15,23,42,0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15,23,42,0.04) 1px, transparent 1px);
+      background-size: auto, auto, 40px 40px, 40px 40px;
+    }
+    .reveal { opacity:0; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.in { opacity:1; transform:none; }
+    .ticker { animation: scroll-x 38s linear infinite; }
+    @keyframes scroll-x { from { transform: translateX(0);} to { transform: translateX(-50%);} }
+    .ticker-wrap:hover .ticker { animation-play-state: paused; }
+  </style>
+</head>
+<body class="font-sans bg-[#F8FAFC] text-ink antialiased">
+
+  <!-- Nav -->
+  <header class="fixed top-4 left-4 right-4 z-50">
+    <nav class="max-w-7xl mx-auto flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white/80 backdrop-blur px-4 sm:px-6 py-3 shadow-sm">
+      <a href="#top" class="flex items-center gap-2.5">
+        <span class="grid place-items-center w-9 h-9 rounded-xl bg-brand-700 text-white">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-6"/></svg>
+        </span>
+        <span class="text-lg font-700 font-semibold tracking-tight">Mizan</span>
+        <span class="hidden sm:inline text-xs font-mono text-slate-400 border-l border-slate-200 pl-2">price.lb</span>
+      </a>
+      <div class="hidden md:flex items-center gap-7 text-sm text-slate-600">
+        <a href="#features" class="hover:text-brand-700 transition-colors">Features</a>
+        <a href="#dashboard" class="hover:text-brand-700 transition-colors">Live data</a>
+        <a href="#pricing" class="hover:text-brand-700 transition-colors">Pricing</a>
+      </div>
+      <a href="#pricing" class="inline-flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium px-4 py-2 transition-colors cursor-pointer">
+        Get access
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section id="top" class="grid-bg pt-32 sm:pt-40 pb-20">
+    <div class="max-w-7xl mx-auto px-5">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <span class="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 text-brand-700 text-xs font-medium px-3 py-1.5">
+            <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-500 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-brand-600"></span></span>
+            Tracking 42,000+ products across Lebanon
+          </span>
+          <h1 class="mt-5 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05]">
+            Lebanon's prices,
+            <span class="text-brand-700">measured</span>
+            and made
+            <span class="text-amber-500">readable</span>.
+          </h1>
+          <p class="mt-5 text-lg text-slate-600 max-w-xl leading-relaxed">
+            Mizan aggregates prices of goods from online retail and wholesale stores across Lebanon — then turns that raw data into clean analytics: inflation signals, basket trends, and where to actually buy.
+          </p>
+          <div class="mt-8 flex flex-col sm:flex-row gap-3">
+            <a href="#pricing" class="inline-flex justify-center items-center gap-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-medium px-6 py-3.5 transition-colors cursor-pointer">
+              Start tracking prices
+            </a>
+            <a href="#dashboard" class="inline-flex justify-center items-center gap-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 font-medium px-6 py-3.5 transition-colors cursor-pointer">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+              See live dashboard
+            </a>
+          </div>
+          <dl class="mt-10 grid grid-cols-3 gap-6 max-w-md">
+            <div><dt class="text-2xl font-bold text-ink">320+</dt><dd class="text-xs text-slate-500 mt-1">Stores monitored</dd></div>
+            <div><dt class="text-2xl font-bold text-ink">Hourly</dt><dd class="text-xs text-slate-500 mt-1">Price refresh</dd></div>
+            <div><dt class="text-2xl font-bold text-ink">USD + LBP</dt><dd class="text-xs text-slate-500 mt-1">Dual currency</dd></div>
+          </dl>
+        </div>
+
+        <!-- Hero card -->
+        <div class="reveal">
+          <div class="rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60 overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-slate-50/60">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-cedar/80"></span><span class="w-3 h-3 rounded-full bg-amber-400"></span><span class="w-3 h-3 rounded-full bg-brand-500"></span>
+              </div>
+              <span class="font-mono text-xs text-slate-400">food_basket_index.lb</span>
+            </div>
+            <div class="p-5">
+              <div class="flex items-end justify-between">
+                <div>
+                  <p class="text-xs text-slate-500">National Food Basket Index</p>
+                  <p class="text-3xl font-bold text-ink mt-1">186.4</p>
+                </div>
+                <span class="inline-flex items-center gap-1 text-sm font-medium text-cedar bg-red-50 px-2.5 py-1 rounded-lg">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg>
+                  +4.2% MoM
+                </span>
+              </div>
+              <div class="mt-4 h-44"><canvas id="heroChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ticker -->
+  <div class="border-y border-slate-200 bg-white ticker-wrap overflow-hidden">
+    <div class="flex gap-8 py-3 whitespace-nowrap ticker font-mono text-sm" id="ticker"></div>
+  </div>
+
+  <!-- Trust -->
+  <section class="py-12">
+    <div class="max-w-7xl mx-auto px-5 text-center">
+      <p class="text-xs uppercase tracking-widest text-slate-400 font-medium">Built for the people who watch Lebanese prices</p>
+      <div class="mt-6 flex flex-wrap justify-center gap-x-10 gap-y-4 text-slate-500 font-medium">
+        <span>Households</span><span>Retailers &amp; Grocers</span><span>NGOs &amp; Researchers</span><span>Journalists</span><span>Importers</span><span>Restaurants</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="py-20">
+    <div class="max-w-7xl mx-auto px-5">
+      <div class="max-w-2xl">
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight">From scattered price tags to one signal</h2>
+        <p class="mt-4 text-slate-600 text-lg">We collect prices everywhere they live online, normalize them, and surface the analytics that matter in a volatile market.</p>
+      </div>
+      <div class="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- card -->
+        <div class="reveal rounded-2xl border border-slate-200 bg-white p-6 hover:shadow-lg hover:shadow-slate-200/60 transition-shadow">
+          <div class="grid place-items-center w-11 h-11 rounded-xl bg-brand-50 text-brand-700"><svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          <h3 class="mt-4 font-semibold text-lg">Retail + wholesale coverage</h3>
+          <p class="mt-2 text-slate-600 text-sm leading-relaxed">Online supermarkets, e-shops, and wholesale distributors — tracked side by side so you see both shelf and bulk pricing.</p>
+        </div>
+        <div class="reveal rounded-2xl border border-slate-200 bg-white p-6 hover:shadow-lg hover:shadow-slate-200/60 transition-shadow">
+          <div class="grid place-items-center w-11 h-11 rounded-xl bg-amber-50 text-amber-600"><svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="12" y="6" width="3" height="11"/><rect x="17" y="13" width="3" height="4"/></svg></div>
+          <h3 class="mt-4 font-semibold text-lg">Inflation &amp; basket indices</h3>
+          <p class="mt-2 text-slate-600 text-sm leading-relaxed">A live food-basket index and category inflation, computed from real listings — not surveys weeks out of date.</p>
+        </div>
+        <div class="reveal rounded-2xl border border-slate-200 bg-white p-6 hover:shadow-lg hover:shadow-slate-200/60 transition-shadow">
+          <div class="grid place-items-center w-11 h-11 rounded-xl bg-brand-50 text-brand-700"><svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <h3 class="mt-4 font-semibold text-lg">USD ↔ LBP, automatically</h3>
+          <p class="mt-2 text-slate-600 text-sm leading-relaxed">Every price normalized in both currencies at the day's market rate, so you can compare apples to apples.</p>
+        </div>
+        <div class="reveal rounded-2xl border border-slate-200 bg-white p-6 hover:shadow-lg hover:shadow-slate-200/60 transition-shadow">
+          <div class="grid place-items-center w-11 h-11 rounded-xl bg-amber-50 text-amber-600"><svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>
+          <h3 class="mt-4 font-semibold text-lg">Cheapest-source finder</h3>
+          <p class="mt-2 text-slate-600 text-sm leading-relaxed">Search any product and instantly see who's selling it lowest right now, with price history per store.</p>
+        </div>
+        <div class="reveal rounded-2xl border border-slate-200 bg-white p-6 hover:shadow-lg hover:shadow-slate-200/60 transition-shadow">
+          <div class="grid place-items-center w-11 h-11 rounded-xl bg-brand-50 text-brand-700"><svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
+          <h3 class="mt-4 font-semibold text-lg">Price alerts</h3>
+          <p class="mt-2 text-slate-600 text-sm leading-relaxed">Set thresholds on the goods you care about and get notified the moment a price crosses your line.</p>
+        </div>
+        <div class="reveal rounded-2xl border border-slate-200 bg-white p-6 hover:shadow-lg hover:shadow-slate-200/60 transition-shadow">
+          <div class="grid place-items-center w-11 h-11 rounded-xl bg-amber-50 text-amber-600"><svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></div>
+          <h3 class="mt-4 font-semibold text-lg">Exports &amp; API</h3>
+          <p class="mt-2 text-slate-600 text-sm leading-relaxed">Pull clean datasets via CSV or REST API — for newsrooms, researchers, and dashboards of your own.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dashboard preview -->
+  <section id="dashboard" class="py-20 bg-white border-y border-slate-200">
+    <div class="max-w-7xl mx-auto px-5">
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div class="max-w-2xl">
+          <span class="text-xs uppercase tracking-widest text-amber-600 font-semibold">Live dashboard</span>
+          <h2 class="mt-2 text-3xl sm:text-4xl font-bold tracking-tight">The analytics, at a glance</h2>
+          <p class="mt-3 text-slate-600 text-lg">A sample of what every Mizan account sees — updated hourly.</p>
+        </div>
+        <span class="font-mono text-xs text-slate-400">demo data · illustrative</span>
+      </div>
+
+      <!-- KPI row -->
+      <div class="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+          <p class="text-xs text-slate-500">Avg. basket (USD)</p>
+          <p class="text-2xl font-bold mt-1">$118.70</p>
+          <p class="text-xs text-cedar mt-1 font-medium">▲ 3.1% this week</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+          <p class="text-xs text-slate-500">Cheapest bread (kg)</p>
+          <p class="text-2xl font-bold mt-1">$0.92</p>
+          <p class="text-xs text-emerald-600 mt-1 font-medium">▼ 1.4% vs avg</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+          <p class="text-xs text-slate-500">Products tracked</p>
+          <p class="text-2xl font-bold mt-1">42,318</p>
+          <p class="text-xs text-slate-500 mt-1 font-medium">+612 today</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+          <p class="text-xs text-slate-500">USD market rate</p>
+          <p class="text-2xl font-bold mt-1">89,500</p>
+          <p class="text-xs text-slate-500 mt-1 font-medium">LBP / USD</p>
+        </div>
+      </div>
+
+      <div class="mt-6 grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 rounded-2xl border border-slate-200 p-5">
+          <div class="flex items-center justify-between">
+            <h3 class="font-semibold">Category price trend (12 mo)</h3>
+            <div class="flex gap-2 text-xs">
+              <span class="inline-flex items-center gap-1.5 text-slate-600"><span class="w-2.5 h-2.5 rounded-sm bg-brand-600"></span>Food</span>
+              <span class="inline-flex items-center gap-1.5 text-slate-600"><span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span>Fuel</span>
+              <span class="inline-flex items-center gap-1.5 text-slate-600"><span class="w-2.5 h-2.5 rounded-sm bg-cedar"></span>Hygiene</span>
+            </div>
+          </div>
+          <div class="mt-4 h-72"><canvas id="trendChart"></canvas></div>
+        </div>
+        <div class="rounded-2xl border border-slate-200 p-5">
+          <h3 class="font-semibold">Retail vs. wholesale gap</h3>
+          <p class="text-xs text-slate-500 mt-1">Avg. markup by category</p>
+          <div class="mt-4 h-72"><canvas id="gapChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- table -->
+      <div class="mt-6 rounded-2xl border border-slate-200 overflow-hidden">
+        <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+          <h3 class="font-semibold">Cheapest source right now</h3>
+          <span class="font-mono text-xs text-slate-400">top movers</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="text-left text-slate-500 bg-slate-50/60">
+              <tr><th class="px-5 py-3 font-medium">Product</th><th class="px-5 py-3 font-medium">Best price</th><th class="px-5 py-3 font-medium">Store</th><th class="px-5 py-3 font-medium">Type</th><th class="px-5 py-3 font-medium text-right">7-day change</th></tr>
+            </thead>
+            <tbody id="tableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="py-20 bg-white border-y border-slate-200">
+    <div class="max-w-7xl mx-auto px-5">
+      <div class="text-center max-w-2xl mx-auto">
+        <h2 class="text-3xl sm:text-4xl font-bold tracking-tight">Simple pricing</h2>
+        <p class="mt-4 text-slate-600 text-lg">Start free. Upgrade when you need history, alerts, or the API.</p>
+      </div>
+      <div class="mt-12 grid md:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
+        <div class="rounded-2xl border border-slate-200 bg-white p-7 flex flex-col">
+          <h3 class="font-semibold text-lg">Citizen</h3>
+          <p class="text-sm text-slate-500 mt-1">For households watching their basket.</p>
+          <p class="mt-5 text-4xl font-bold">Free</p>
+          <ul class="mt-6 space-y-3 text-sm text-slate-600 flex-1">
+            <li class="flex gap-2"><svg class="w-5 h-5 text-brand-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Live basket index</li>
+            <li class="flex gap-2"><svg class="w-5 h-5 text-brand-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Cheapest-source search</li>
+            <li class="flex gap-2"><svg class="w-5 h-5 text-brand-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>7-day price history</li>
+          </ul>
+          <a href="#cta" class="mt-7 inline-flex justify-center rounded-xl border border-slate-300 hover:bg-slate-50 font-medium px-5 py-3 transition-colors cursor-pointer">Get started</a>
+        </div>
+        <div class="rounded-2xl border-2 border-brand-600 bg-white p-7 flex flex-col relative shadow-xl shadow-brand-100">
+          <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs font-semibold px-3 py-1 rounded-full">Most popular</span>
+          <h3 class="font-semibold text-lg">Pro</h3>
+          <p class="text-sm text-slate-500 mt-1">For grocers, importers &amp; analysts.</p>
+          <p class="mt-5 text-4xl font-bold">$29<span class="text-base font-medium text-slate-500">/mo</span></p>
+          <ul class="mt-6 space-y-3 text-sm text-slate-600 flex-1">
+            <li class="flex gap-2"><svg class="w-5 h-5 text-brand-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Everything in Citizen</li>
+            <li class="flex gap-2"><svg class="w-5 h-5 text-brand-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Full price history</li>
+            <li class="flex gap-2"><svg class="w-5 h-5 text-brand-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Unlimited price alerts</li>
+            <li class="flex gap-2"><svg class="w-5 h-5 text-brand-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Retail vs. wholesale analytics</li>
+            <li class="flex gap-2"><svg class="w-5 h-5 text-brand-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>CSV exports</li>
+          </ul>
+          <a href="#cta" class="mt-7 inline-flex justify-center rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-medium px-5 py-3 transition-colors cursor-pointer">Start Pro trial</a>
+        </div>
+        <div class="rounded-2xl border border-slate-200 bg-white p-7 flex flex-col">
+          <h3 class="font-semibold text-lg">Institution</h3>
+          <p class="text-sm text-slate-500 mt-1">For NGOs, media &amp; government.</p>
+          <p class="mt-5 text-4xl font-bold">Custom</p>
+          <ul class="mt-6 space-y-3 text-sm text-slate-600 flex-1">
+            <li class="flex gap-2"><svg class="w-5 h-5 text-brand-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Everything in Pro</li>
+            <li class="flex gap-2"><svg class="w-5 h-5 text-brand-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Full REST API access</li>
+            <li class="flex gap-2"><svg class="w-5 h-5 text-brand-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Custom indices &amp; regions</li>
+            <li class="flex gap-2"><svg class="w-5 h-5 text-brand-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Dedicated support</li>
+          </ul>
+          <a href="#cta" class="mt-7 inline-flex justify-center rounded-xl border border-slate-300 hover:bg-slate-50 font-medium px-5 py-3 transition-colors cursor-pointer">Contact us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="py-20">
+    <div class="max-w-3xl mx-auto px-5">
+      <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-center">Questions</h2>
+      <div class="mt-10 space-y-3" id="faq">
+        <details class="group rounded-xl border border-slate-200 bg-white p-5 [&_svg]:open:rotate-180">
+          <summary class="flex items-center justify-between cursor-pointer font-medium list-none">Where does the price data come from?<svg class="w-5 h-5 text-slate-400 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <p class="mt-3 text-slate-600 text-sm leading-relaxed">Publicly listed prices from Lebanese online retail stores and wholesale distributors. We collect, match, and normalize them — we never invent numbers.</p>
+        </details>
+        <details class="group rounded-xl border border-slate-200 bg-white p-5 [&_svg]:open:rotate-180">
+          <summary class="flex items-center justify-between cursor-pointer font-medium list-none">How current is the data?<svg class="w-5 h-5 text-slate-400 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <p class="mt-3 text-slate-600 text-sm leading-relaxed">Most sources refresh hourly. Every data point is timestamped so you always know how fresh a price is.</p>
+        </details>
+        <details class="group rounded-xl border border-slate-200 bg-white p-5 [&_svg]:open:rotate-180">
+          <summary class="flex items-center justify-between cursor-pointer font-medium list-none">Do you handle the USD / LBP problem?<svg class="w-5 h-5 text-slate-400 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <p class="mt-3 text-slate-600 text-sm leading-relaxed">Yes. Every price is shown in both currencies, converted at the day's market rate, so comparisons stay honest as the rate moves.</p>
+        </details>
+        <details class="group rounded-xl border border-slate-200 bg-white p-5 [&_svg]:open:rotate-180">
+          <summary class="flex items-center justify-between cursor-pointer font-medium list-none">Can I get the raw data?<svg class="w-5 h-5 text-slate-400 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <p class="mt-3 text-slate-600 text-sm leading-relaxed">Pro plans include CSV exports, and Institution plans add full REST API access for integrating Mizan data into your own tools.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section id="cta" class="py-20">
+    <div class="max-w-5xl mx-auto px-5">
+      <div class="rounded-3xl bg-brand-800 text-white px-8 py-14 text-center relative overflow-hidden">
+        <div class="absolute inset-0 opacity-20" style="background-image:radial-gradient(circle at 20% 20%, #F59E0B, transparent 40%), radial-gradient(circle at 80% 60%, #3B82F6, transparent 45%);"></div>
+        <div class="relative">
+          <h2 class="text-3xl sm:text-4xl font-bold tracking-tight">See where Lebanon's prices are really going.</h2>
+          <p class="mt-4 text-brand-100 text-lg max-w-xl mx-auto">Join Mizan and turn a chaotic market into a chart you can read.</p>
+          <form class="mt-8 flex flex-col sm:flex-row gap-3 max-w-md mx-auto" onsubmit="event.preventDefault(); this.querySelector('button').textContent='Thanks! We\'ll be in touch ✓';">
+            <label for="email" class="sr-only">Email address</label>
+            <input id="email" type="email" required placeholder="you@email.com" class="flex-1 rounded-xl px-4 py-3 text-ink placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400" />
+            <button type="submit" class="rounded-xl bg-amber-500 hover:bg-amber-600 font-medium px-6 py-3 transition-colors cursor-pointer whitespace-nowrap">Get early access</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 py-10">
+    <div class="max-w-7xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+      <div class="flex items-center gap-2.5">
+        <span class="grid place-items-center w-8 h-8 rounded-lg bg-brand-700 text-white"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-6"/></svg></span>
+        <span class="font-semibold text-ink">Mizan</span>
+        <span class="text-slate-400">· Price intelligence for Lebanon</span>
+      </div>
+      <p>© 2026 Mizan. Demo landing page. Data shown is illustrative.</p>
+    </div>
+  </footer>
+
+  <script>
+    // ---- Demo data ----
+    const months = ['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun'];
+    const blue = '#2563eb', amber = '#F59E0B', cedar = '#C8102E', slate = '#94a3b8';
+    Chart.defaults.font.family = "'Fira Sans', sans-serif";
+    Chart.defaults.font.size = 11;
+    Chart.defaults.color = '#64748b';
+
+    function gradient(ctx, color) {
+      const g = ctx.createLinearGradient(0,0,0,180);
+      g.addColorStop(0, color + '40'); g.addColorStop(1, color + '00'); return g;
+    }
+
+    // Hero chart
+    (function(){
+      const c = document.getElementById('heroChart'); if(!c) return;
+      const ctx = c.getContext('2d');
+      new Chart(ctx, {
+        type:'line',
+        data:{ labels:months, datasets:[{
+          data:[142,148,151,150,156,159,163,168,170,175,181,186],
+          borderColor:cedar, backgroundColor:gradient(ctx,cedar), borderWidth:2.5, fill:true, tension:.4, pointRadius:0, pointHoverRadius:5
+        }]},
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{grid:{color:'#f1f5f9'},ticks:{maxTicksLimit:4}}, x:{grid:{display:false},ticks:{maxTicksLimit:6}} } }
+      });
+    })();
+
+    // Trend chart
+    (function(){
+      const c = document.getElementById('trendChart'); if(!c) return;
+      const ctx = c.getContext('2d');
+      new Chart(ctx, {
+        type:'line',
+        data:{ labels:months, datasets:[
+          {label:'Food', data:[100,104,108,109,114,118,121,126,129,134,140,145], borderColor:blue, backgroundColor:gradient(ctx,blue), borderWidth:2.5, fill:true, tension:.4, pointRadius:0, pointHoverRadius:5},
+          {label:'Fuel', data:[100,110,118,112,120,131,128,135,142,138,150,156], borderColor:amber, borderWidth:2.5, fill:false, tension:.4, pointRadius:0, pointHoverRadius:5},
+          {label:'Hygiene', data:[100,102,105,106,108,111,113,116,118,121,124,128], borderColor:cedar, borderWidth:2.5, fill:false, tension:.4, pointRadius:0, pointHoverRadius:5},
+        ]},
+        options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, plugins:{legend:{display:false}}, scales:{ y:{grid:{color:'#f1f5f9'}}, x:{grid:{display:false}} } }
+      });
+    })();
+
+    // Gap chart
+    (function(){
+      const c = document.getElementById('gapChart'); if(!c) return;
+      new Chart(c.getContext('2d'), {
+        type:'bar',
+        data:{ labels:['Grains','Dairy','Produce','Cleaning','Beverages'], datasets:[
+          {label:'Markup %', data:[22,31,28,19,35], backgroundColor:[blue,amber,blue,amber,blue], borderRadius:6, barThickness:24}
+        ]},
+        options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'#f1f5f9'},ticks:{callback:v=>v+'%'}}, y:{grid:{display:false}} } }
+      });
+    })();
+
+    // Ticker
+    (function(){
+      const items = [
+        ['Rice 1kg','$1.85','+2.1%','up'],['Sugar 1kg','$1.20','-0.8%','down'],['Bread bundle','$0.92','+1.4%','up'],
+        ['Cooking oil 1L','$3.40','+3.6%','up'],['Eggs (30)','$5.10','-1.2%','down'],['Milk 1L','$1.95','+0.5%','up'],
+        ['Coffee 200g','$4.75','+2.9%','up'],['Lentils 1kg','$2.30','-0.4%','down'],['Diesel 20L','$18.60','+4.1%','up'],
+        ['Detergent 3L','$6.20','+0.9%','up'],['Tomatoes 1kg','$1.45','-3.1%','down'],['Chicken 1kg','$4.10','+1.7%','up'],
+      ];
+      const row = items.map(([n,p,c,d])=>`<span class="inline-flex items-center gap-2 px-2"><span class="text-slate-500">${n}</span><span class="font-semibold text-ink">${p}</span><span class="${d==='up'?'text-cedar':'text-emerald-600'}">${c}</span></span>`).join('<span class="text-slate-300">•</span>');
+      document.getElementById('ticker').innerHTML = row + '<span class="text-slate-300">•</span>' + row;
+    })();
+
+    // Table
+    (function(){
+      const rows = [
+        ['Sunflower oil 1L','$3.18','SpinneysOnline','Retail','+4.2%','up'],
+        ['Basmati rice 5kg','$8.40','Mira Wholesale','Wholesale','-1.1%','down'],
+        ['Powdered milk 900g','$9.95','Carrefour LB','Retail','+0.7%','up'],
+        ['White sugar 50kg','$48.00','Beirut Traders','Wholesale','+2.3%','up'],
+        ['Pasta 500g','$0.78','TSC Signature','Retail','-2.0%','down'],
+        ['Tomato paste 24×','$14.20','Zaatar Distrib.','Wholesale','+1.5%','up'],
+      ];
+      document.getElementById('tableBody').innerHTML = rows.map(([prod,price,store,type,chg,dir])=>`
+        <tr class="hover:bg-slate-50 transition-colors cursor-pointer">
+          <td class="px-5 py-3 font-medium">${prod}</td>
+          <td class="px-5 py-3 font-mono font-semibold">${price}</td>
+          <td class="px-5 py-3 text-slate-600">${store}</td>
+          <td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full ${type==='Retail'?'bg-brand-50 text-brand-700':'bg-amber-50 text-amber-600'}">${type}</span></td>
+          <td class="px-5 py-3 text-right font-medium ${dir==='up'?'text-cedar':'text-emerald-600'}">${chg}</td>
+        </tr>`).join('');
+    })();
+
+    // Reveal on scroll
+    const io = new IntersectionObserver((entries)=>{ entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }); }, {threshold:.15});
+    document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  </script>
+</body>
+</html>

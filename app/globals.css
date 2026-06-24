@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand = Lebanese cedar green (institutional primary) */
+  --color-brand-50:  #e9f1ec;
+  --color-brand-100: #cfe0d5;
+  --color-brand-200: #a7c6b3;
+  --color-brand-300: #74a487;
+  --color-brand-500: #2f7a52;
+  --color-brand-600: #266a47;
+  --color-brand-700: #1f5c3c;
+  --color-brand-800: #184a31;
+  --color-brand-900: #123826;
+
+  /* Amber = restrained brass (seal / officialdom accent) */
+  --color-amber-400: #c3a463;
+  --color-amber-500: #9a7b3f;
+  --color-amber-600: #806733;
+
+  /* State red — Lebanese flag, used sparingly for alerts / the seal */
+  --color-cedar: #c2152e;
+
+  /* Document tones */
+  --color-ink: #122019;
+  --color-paper: #f3f3ee;
+
+  --font-sans:    var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    var(--font-plex-mono), ui-monospace, monospace;
+  --font-display: var(--font-fraunces), Georgia, serif;
+}
+
+:root {
+  --background: #f3f3ee;
+  --foreground: #122019;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Institutional helpers ─────────────────────────────────────────────── */
+/* Classification-style eyebrow */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-brand-700);
+}
+/* Hairline rule with a brass tick */
+.rule {
+  height: 1px;
+  background: rgba(18, 32, 25, 0.14);
+}
+/* Double-rule memo frame */
+.memo {
+  border: 1px solid rgba(18, 32, 25, 0.18);
+  box-shadow: 0 0 0 4px #fff, 0 0 0 5px rgba(18, 32, 25, 0.08);
+  background: #fff;
+}
+
+/* Reveal-on-scroll helper */
+.reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
+.reveal.in { opacity: 1; transform: none; }
+
+/* Scrolling ticker */
+.ticker { animation: scroll-x 44s linear infinite; }
+@keyframes scroll-x { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.ticker-wrap:hover .ticker { animation-play-state: paused; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.fade-in { animation: fadeIn .25s ease-out; }
+
+/* Typing dots for the advisor */
+.typing-dot {
+  width: 6px; height: 6px; border-radius: 9999px;
+  background: var(--color-brand-700); display: inline-block;
+  animation: typing 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: .2s; }
+.typing-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes typing { 0%,60%,100% { opacity: .25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* Thin scrollbars in scroll regions */
+.scroll-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: #cbd5c4; border-radius: 9999px; }
+.scroll-thin::-webkit-scrollbar-track { background: transparent; }
