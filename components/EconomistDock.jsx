@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import MessageContent from "@/components/MessageContent";
+import { t } from "@/lib/i18n";
 
 // Hydration-safe persisted open/closed state. Reads via useSyncExternalStore
 // (server snapshot = closed) so there is no setState-in-effect and no SSR
@@ -26,71 +27,31 @@ function usePersistentOpen() {
   return [open, setOpen];
 }
 
-// Each page gets its own specialist: a distinct title, framing and starters,
-// plus a `focus` tag the API uses to bias the briefing toward that dataset.
-function contextFor(pathname) {
-  if (pathname.startsWith("/cpi")) {
-    return {
-      focus: "cpi",
-      title: "CPI Analyst",
-      subtitle: "Lebanon · non-core daily CPI",
-      intro: "The non-core daily CPI — category indices against a base of 100. Ask about today's movers and the index trend.",
-      starters: [
-        { icon: "📈", text: "Summarize today's non-core CPI in two lines" },
-        { icon: "📊", text: "Which CPI categories rose fastest day-over-day?" },
-        { icon: "🥖", text: "Chart the food categories by current index" },
-      ],
-    };
-  }
-  if (pathname.startsWith("/dashboard")) {
-    return {
-      focus: "retail",
-      title: "Retail Analyst",
-      subtitle: "Lebanon · retail price levels",
-      intro: "Shelf-price levels, affordability and category mix from the live market snapshot — market-level only, no individual stores.",
-      starters: [
-        { icon: "💵", text: "What's the affordability split across price bands?" },
-        { icon: "🗂️", text: "Which categories sit at the highest median price?" },
-        { icon: "📊", text: "Chart items by price band" },
-      ],
-    };
-  }
-  if (pathname.startsWith("/products")) {
-    return {
-      focus: "products",
-      title: "Catalogue Analyst",
-      subtitle: "Lebanon · product catalogue",
-      intro: "The full standardized catalogue — prices, brands and origins across 47.8k products. Ask about any item, brand or category.",
-      starters: [
-        { icon: "🔎", text: "What's the typical price for cooking oil?" },
-        { icon: "🏷️", text: "Which categories have the widest price ranges?" },
-        { icon: "🌍", text: "Which brands are most listed, and where from?" },
-      ],
-    };
-  }
-  if (pathname.startsWith("/trade")) {
-    return {
-      focus: "trade",
-      title: "Sourcing Advisor",
-      subtitle: "Lebanon · import dependency",
-      intro: "Import single-source concentration, supplier blocs and maritime chokepoints. Ask how to reduce dependency and shipping risk.",
-      starters: [
-        { icon: "⚓", text: "Which categories are dangerously single-source?" },
-        { icon: "🚢", text: "What's our biggest maritime chokepoint exposure?" },
-        { icon: "🧭", text: "How can Lebanon diversify away from its top supplier?" },
-      ],
-    };
-  }
+// Each page gets its own specialist. Focus tag biases the API; titles/intros/
+// starters come from the i18n dictionary so the dock speaks the active language.
+const STARTER_ICONS = {
+  cpi: ["📈", "📊", "🥖"],
+  retail: ["💵", "🗂️", "📊"],
+  products: ["🔎", "🏷️", "🌍"],
+  trade: ["⚓", "🚢", "🧭"],
+  general: ["🧭", "⚖️", "💵"],
+};
+function focusOf(pathname) {
+  if (pathname.startsWith("/cpi")) return "cpi";
+  if (pathname.startsWith("/dashboard")) return "retail";
+  if (pathname.startsWith("/products")) return "products";
+  if (pathname.startsWith("/trade")) return "trade";
+  return "general";
+}
+function contextFor(pathname, locale) {
+  const focus = focusOf(pathname);
+  const tr = (k) => t(locale, `dock.${focus}.${k}`);
   return {
-    focus: "general",
-    title: "Price Economist",
-    subtitle: "Lebanon · prices overview",
-    intro: "The headline read on Lebanese prices — CPI, retail levels and import sourcing. Ask anything, or start with one of these.",
-    starters: [
-      { icon: "🧭", text: "What's the headline on Lebanese prices today?" },
-      { icon: "⚖️", text: "Compare the CPI index with the retail snapshot" },
-      { icon: "💵", text: "Which goods are squeezing households most?" },
-    ],
+    focus,
+    title: tr("title"),
+    subtitle: tr("subtitle"),
+    intro: tr("intro"),
+    starters: STARTER_ICONS[focus].map((icon, i) => ({ icon, text: tr(`s${i + 1}`) })),
   };
 }
 
@@ -100,7 +61,7 @@ const SealIcon = ({ className }) => (
   </svg>
 );
 
-export default function EconomistDock() {
+export default function EconomistDock({ locale = "en" }) {
   const pathname = usePathname();
   const [open, setOpen] = usePersistentOpen();
   const [messages, setMessages] = useState([]);
@@ -110,7 +71,8 @@ export default function EconomistDock() {
   const endRef = useRef(null);
   const inputRef = useRef(null);
 
-  const { focus, title, subtitle, intro, starters } = contextFor(pathname);
+  const tr = (k) => t(locale, k);
+  const { focus, title, subtitle, intro, starters } = contextFor(pathname, locale);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -135,7 +97,7 @@ export default function EconomistDock() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg, history: base.slice(-10), focus }),
+        body: JSON.stringify({ message: userMsg, history: base.slice(-10), focus, locale }),
       });
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
@@ -175,7 +137,7 @@ export default function EconomistDock() {
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400" />
           </span>
           <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ writingMode: "vertical-rl" }}>
-            AI Price Economist
+            {t(locale, "dock.general.title")}
           </span>
           <SealIcon className="w-4 h-4 text-amber-400" />
         </button>
@@ -209,12 +171,12 @@ export default function EconomistDock() {
               {messages.length > 0 && (
                 <button onClick={() => { setMessages([]); setError(null); }} aria-label="Clear conversation"
                   className="text-[10px] font-mono uppercase tracking-wider text-paper/55 hover:text-paper border border-white/15 rounded px-2 py-1 transition-colors cursor-pointer">
-                  Clear
+                  {tr("dock.clear")}
                 </button>
               )}
               <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-emerald-500/25 bg-emerald-500/10">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 6px rgba(52,211,153,0.7)" }} />
-                <span className="font-mono text-[9px] font-semibold tracking-[0.16em] text-emerald-400">LIVE</span>
+                <span className="font-mono text-[9px] font-semibold tracking-[0.16em] text-emerald-400">{tr("common.live")}</span>
               </span>
               <button onClick={() => setOpen(false)} aria-label="Collapse"
                 className="grid place-items-center w-8 h-8 rounded-md text-paper/70 hover:bg-white/10 cursor-pointer">
@@ -231,11 +193,11 @@ export default function EconomistDock() {
                   <span className="grid place-items-center w-14 h-14 rounded-2xl bg-white/[0.05] ring-1 ring-amber-500/25 text-amber-400 mx-auto">
                     <SealIcon className="w-7 h-7" />
                   </span>
-                  <h2 className="mt-4 font-display text-lg font-semibold text-paper">Ask the {title}</h2>
+                  <h2 className="mt-4 font-display text-lg font-semibold text-paper">{tr("dock.askThe")} {title}</h2>
                   <p className="mt-1.5 text-sm text-paper/55 leading-relaxed">{intro}</p>
                 </div>
 
-                <p className="font-mono text-[10px] font-semibold tracking-[0.2em] text-paper/40 mb-2.5">TRY ASKING</p>
+                <p className="font-mono text-[10px] font-semibold tracking-[0.2em] text-paper/40 mb-2.5">{tr("dock.trySaking")}</p>
                 <div className="space-y-2.5">
                   {starters.map((s, i) => (
                     <button key={i} onClick={() => send(s.text)}
@@ -256,7 +218,7 @@ export default function EconomistDock() {
                   ) : (
                     <div className="w-full">
                       <div className="flex items-center gap-1.5 text-[11px] text-amber-400 font-mono mb-1.5 tracking-wider">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> ECONOMIST
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> {locale === "ar" ? "الخبير" : "ECONOMIST"}
                       </div>
                       <div className="rounded-2xl rounded-tl-sm border border-white/10 bg-white px-3.5 py-2.5">
                         {m.text ? <MessageContent text={m.text} /> : <span className="text-slate-400 text-sm">…</span>}
@@ -271,7 +233,7 @@ export default function EconomistDock() {
                   <span className="typing-dot" style={{ background: "#c3a463" }} />
                   <span className="typing-dot" style={{ background: "#c3a463" }} />
                   <span className="typing-dot" style={{ background: "#c3a463" }} />
-                  <span className="text-[11px] text-paper/45 font-mono ml-1 tracking-wider">ANALYZING…</span>
+                  <span className="text-[11px] text-paper/45 font-mono ml-1 tracking-wider">{locale === "ar" ? "يحلّل…" : "ANALYZING…"}</span>
                 </div>
               )}
 
@@ -288,7 +250,7 @@ export default function EconomistDock() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-                placeholder="Ask the price economist…"
+                placeholder={tr("dock.placeholder")}
                 rows={1}
                 className="flex-1 resize-none rounded-lg border border-white/15 bg-white/[0.05] px-3 py-2.5 text-sm text-paper placeholder-paper/40 outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/15 max-h-28"
                 aria-label="Ask the AI Price Economist"
@@ -306,7 +268,7 @@ export default function EconomistDock() {
                 )}
               </button>
             </div>
-            <p className="mt-2 text-[10px] text-paper/40 font-mono text-right">Enter to send · Shift+Enter new line</p>
+            <p className="mt-2 text-[10px] text-paper/40 font-mono text-right">{locale === "ar" ? "Enter للإرسال · Shift+Enter سطر جديد" : "Enter to send · Shift+Enter new line"}</p>
           </div>
         </aside>
       )}

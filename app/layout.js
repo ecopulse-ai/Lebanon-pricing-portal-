@@ -4,6 +4,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import EconomistDock from "@/components/EconomistDock";
 import AuthGate from "@/components/AuthGate";
+import { getLocale } from "@/lib/locale-server";
+import { isRTL } from "@/lib/i18n";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -40,18 +42,20 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const locale = await getLocale();
   return (
     <html
-      lang="en"
+      lang={locale}
+      dir={isRTL(locale) ? "rtl" : "ltr"}
       className={`${fraunces.variable} ${inter.variable} ${plexMono.variable} h-full`}
     >
       <body className="min-h-full flex flex-col bg-paper text-ink">
-        <AuthGate>
-          <Navbar />
+        <AuthGate locale={locale}>
+          <Navbar locale={locale} />
           <main className="flex-1 flex flex-col min-h-0">{children}</main>
-          <Footer />
-          <EconomistDock />
+          <Footer locale={locale} />
+          <EconomistDock locale={locale} />
         </AuthGate>
       </body>
     </html>

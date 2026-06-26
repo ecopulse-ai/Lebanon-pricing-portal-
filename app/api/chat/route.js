@@ -34,7 +34,7 @@ export async function POST(req) {
     return Response.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { message, history = [], focus } = body || {};
+  const { message, history = [], focus, locale } = body || {};
   if (!message || typeof message !== "string") {
     return Response.json({ error: "Missing 'message'." }, { status: 400 });
   }
@@ -47,6 +47,10 @@ export async function POST(req) {
     general: "\n\nYou are the PRICE ECONOMIST giving the headline read across CPI, retail price levels and import sourcing.",
   };
   const focusNote = FOCUS_NOTES[focus] || "";
+
+  const langNote = locale === "ar"
+    ? "\n\nRespond in Modern Standard Arabic (العربية). Keep all numbers, currency symbols ($, LBP), percentages, dates, and any [CHART]...[/CHART] block exactly as specified (chart titles and data labels may be Arabic). Markdown still uses the same syntax."
+    : "";
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return Response.json(
@@ -92,7 +96,7 @@ export async function POST(req) {
           max_tokens: 6000,
           thinking: { type: "adaptive" }, // Opus 4.8 — max reasoning for best results
           system: [
-            { type: "text", text: SYSTEM + focusNote },
+            { type: "text", text: SYSTEM + focusNote + langNote },
             {
               type: "text",
               text: `=== NON-CORE DAILY CPI SNAPSHOT ===\n${getCpiContext()}\n\n=== LIVE MARKET SNAPSHOT (real measured data, market-level) ===\n${getRetailContext()}\n\n=== TRADE & SHIPPING DEPENDENCY (import origins, market-level) ===\n${getTradeContext()}\n\n=== RETAIL PRICE SNAPSHOT (illustrative basket) ===\n${getDataContext()}`,

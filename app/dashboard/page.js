@@ -6,6 +6,8 @@ import {
   getRetailKPIs, getSnapshotMeta, getCategories, getOrigins,
   getPriceBands, getTopBrands,
 } from "@/lib/retailData";
+import { getLocale } from "@/lib/locale-server";
+import { t, localizeCategory, localizeOrigin } from "@/lib/i18n";
 
 export const metadata = {
   title: "Retail Analytics — Lebanon Prices Intelligence Unit",
@@ -38,15 +40,17 @@ function Panel({ title, sub, children, right, className = "" }) {
   );
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const locale = await getLocale();
+  const tr = (key) => t(locale, key);
+  const ar = locale === "ar";
   const k = getRetailKPIs();
   const meta = getSnapshotMeta();
-  const categories = getCategories();
-  const origins = getOrigins();
+  const categories = getCategories().map((c) => ({ ...c, name: localizeCategory(locale, c.name) }));
+  const origins = getOrigins().map((o) => ({ ...o, name: localizeOrigin(locale, o.name) }));
   const bands = getPriceBands();
   const brands = getTopBrands(8);
 
-  // Market-level reads (no store-level comparison).
   const under5 = Math.round(bands.slice(0, 3).reduce((a, b) => a + b.sharePct, 0) * 10) / 10;
   const above10 = Math.round(bands.slice(-2).reduce((a, b) => a + b.sharePct, 0) * 10) / 10;
   const outOfStock = Math.round((100 - k.inStockRate) * 10) / 10;
@@ -58,55 +62,55 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="eyebrow">Instrument II · Retail &amp; Wholesale</span>
+            <span className="eyebrow">{tr("dash.eyebrow")}</span>
             <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-brand-700 bg-brand-50 border border-brand-100 px-2 py-0.5 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-600" />LIVE DATA
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-600" />{tr("common.liveData")}
             </span>
-            <span className="font-mono text-xs text-slate-400">snapshot {meta.snapshotDates.join(" – ")}</span>
+            <span className="font-mono text-xs text-slate-400">{tr("common.snapshot")} {meta.snapshotDates.join(" – ")}</span>
           </div>
-          <h1 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-tight font-display text-ink">Lebanon Retail Analytics</h1>
+          <h1 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-tight font-display text-ink">{tr("dash.title")}</h1>
           <p className="mt-1 text-slate-600">
-            {k.products.toLocaleString()} shelf prices read for affordability, category mix and import sourcing.
+            {k.products.toLocaleString()} {tr("dash.desc1")}
           </p>
         </div>
-        <AskEconomist label="Ask the Retail Analyst" className="self-start" />
+        <AskEconomist label={tr("dash.ask")} className="self-start" />
       </div>
 
       {/* KPIs */}
       <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label="Items priced" value={k.products.toLocaleString()} sub={`national retail coverage · ${k.categories} categories`} />
-        <KpiCard label="Median shelf price" value={`$${k.medianPrice}`} sub={`mean $${k.meanPrice} (skewed by premium goods)`} />
-        <KpiCard label="On-shelf availability" value={`${k.inStockRate}%`} sub={`${outOfStock}% of listings out of stock`} tone={k.inStockRate >= 75 ? "down" : "up"} />
-        <KpiCard label="Import dependency" value={`${k.originCountries} countries`} sub={`${k.tracedToOriginPct}% of items traced abroad`} tone="brand" />
+        <KpiCard label={tr("dash.kpiItems")} value={k.products.toLocaleString()} sub={`${tr("dash.kpiItemsSub")} · ${k.categories} ${tr("dash.kpiCats")}`} />
+        <KpiCard label={tr("dash.kpiMedian")} value={`$${k.medianPrice}`} sub={`${tr("dash.kpiMedianSub")} $${k.meanPrice} ${tr("dash.kpiMedianSub2")}`} />
+        <KpiCard label={tr("dash.kpiAvail")} value={`${k.inStockRate}%`} sub={`${outOfStock}% ${tr("dash.kpiAvailSub")}`} tone={k.inStockRate >= 75 ? "down" : "up"} />
+        <KpiCard label={tr("dash.kpiImport")} value={`${k.originCountries} ${tr("dash.kpiImportCountries")}`} sub={`${k.tracedToOriginPct}% ${tr("dash.kpiImportSub")}`} tone="brand" />
       </div>
 
-      {/* Situation callout — market level, no store comparison */}
+      {/* Situation callout */}
       <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-50/50 px-5 py-4">
         <p className="text-sm text-ink leading-relaxed">
-          <span className="font-semibold">Situation —</span>{" "}
-          <span className="font-semibold text-brand-700">{under5}%</span> of tracked goods sell under $5 (median ${k.medianPrice}), yet
-          {" "}<span className="font-semibold">{above10}%</span> sit above $10. With
-          {" "}<span className="font-semibold text-cedar">{outOfStock}% of listings out of stock</span>, supply gaps are widespread, and sourcing stays import-bound — led by
-          {" "}<span className="font-semibold">{topOrigin.name} ({topOrigin.sharePct}%)</span>. Shelf prices track global costs and FX, not just margin.
+          <span className="font-semibold">{tr("dash.situation")}</span>{" "}
+          <span className="font-semibold text-brand-700">{under5}%</span> {tr("dash.sitUnder5")} ${k.medianPrice}),
+          {" "}{tr("dash.sitAbove10a")} <span className="font-semibold">{above10}%</span> {tr("dash.sitAbove10b")}
+          {" "}<span className="font-semibold text-cedar">{outOfStock}% {tr("dash.sitOOS")}</span>{tr("dash.sitSupply")}
+          {" "}<span className="font-semibold">{topOrigin.name} ({topOrigin.sharePct}%)</span>. {tr("dash.sitTrack")}
         </p>
       </div>
 
       {/* Row A — affordability + catalogue mix */}
       <div className="mt-6 grid lg:grid-cols-3 gap-6">
-        <Panel title="Affordability" sub="Items by price band (USD)">
+        <Panel title={tr("dash.affordability")} sub={tr("dash.affordabilitySub")}>
           <PriceBandChart data={bands} height={440} />
         </Panel>
-        <Panel className="lg:col-span-2" title="Catalogue mix" sub="Share of items by category (median price on hover)">
+        <Panel className="lg:col-span-2" title={tr("dash.catalogue")} sub={tr("dash.catalogueSub")}>
           <CategoryShareChart data={categories} height={440} />
         </Panel>
       </div>
 
       {/* Row B — sourcing + brands */}
       <div className="mt-6 grid lg:grid-cols-3 gap-6">
-        <Panel className="lg:col-span-2" title="Import dependency" sub={`Share of the ${k.tracedToOriginPct}% of items traced to a source country`}>
+        <Panel className="lg:col-span-2" title={tr("dash.importDep")} sub={`${tr("dash.importDepSub")} ${k.tracedToOriginPct}% ${tr("dash.importDepSub2")}`}>
           <OriginShareChart data={origins} height={360} />
         </Panel>
-        <Panel title="Leading brands" sub="Most-listed brands on shelf">
+        <Panel title={tr("dash.brands")} sub={tr("dash.brandsSub")}>
           <ul className="divide-y divide-slate-100 -mt-1">
             {brands.map((b, i) => (
               <li key={b.name} className="flex items-center justify-between py-2.5">
@@ -123,7 +127,10 @@ export default function DashboardPage() {
 
       {/* Provenance */}
       <p className="mt-6 text-xs text-slate-400 leading-relaxed max-w-3xl">
-        {meta.note} Source: {meta.source} ({meta.rawCategories} raw categories normalized to {k.categories} strategic groups).
+        {ar
+          ? "لقطة مقطعية لرفوف التجزئة في لبنان عبر عدة سلاسل. جُمعت في أيام مختلفة، فالأرقام موضعية (مستوى السعر، التوفّر، المصدر) — لا سلسلة زمنية."
+          : meta.note}{" "}
+        {tr("dash.provenance")} {meta.source} ({meta.rawCategories} {tr("dash.provNorm")} {k.categories} {tr("dash.provGroups")})
       </p>
     </div>
   );

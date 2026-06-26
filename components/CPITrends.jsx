@@ -8,6 +8,7 @@ import {
   FOOD_CATS, AGG_CATS, CATEGORY_LABELS, CATEGORY_COLORS,
   getChartData, getCpiSummary, getSparkline,
 } from "@/lib/cpiData";
+import { localizeCpiCategory } from "@/lib/i18n";
 
 const tooltipStyle = {
   background: "#122019", border: "none", borderRadius: 8,
@@ -30,13 +31,28 @@ function Spark({ values, color, h = 28 }) {
   );
 }
 
-function Change({ v, unit = "% DoD" }) {
+function Change({ v, unit }) {
   const up = parseFloat(v) > 0;
   const flat = parseFloat(v) === 0;
   return (
     <span className={`font-mono text-xs font-semibold ${flat ? "text-slate-400" : up ? "text-cedar" : "text-emerald-600"}`}>
       {flat ? "•" : up ? "▲" : "▼"} {Math.abs(parseFloat(v))}{unit}
     </span>
+  );
+}
+
+function CpiTooltip({ active, payload, label, locale }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={tooltipStyle}>
+      <div className="font-semibold mb-1.5 text-amber-400">{label}</div>
+      {payload.map((p, i) => (
+        <div key={i} className="flex justify-between gap-5">
+          <span style={{ color: p.color }}>{localizeCpiCategory(locale, CATEGORY_LABELS[p.dataKey] || p.dataKey)}</span>
+          <span className="font-semibold">{p.value}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -50,13 +66,15 @@ function Reading({ label, value, color, sub, spark, date }) {
       <div className="font-mono text-3xl font-semibold leading-none" style={{ color }}>{value}</div>
       <div className="min-h-[18px]">{sub}</div>
       {spark}
-      <div className="font-mono text-[10px] text-slate-400">as of {date}</div>
+      <div className="font-mono text-[10px] text-slate-400">{date}</div>
     </div>
   );
 }
 
-export default function CPITrends() {
+export default function CPITrends({ locale = "en" }) {
   const s = getCpiSummary();
+  const ar = locale === "ar";
+  const L = (cat) => localizeCpiCategory(locale, CATEGORY_LABELS[cat]);
   const chartData = useMemo(() => getChartData(), []);
   const [selected, setSelected] = useState([
     "FruitAndNuts", "BreadAndCereals", "MeatAndPoultry", "FishAndSeafood", "CPI",
@@ -70,41 +88,28 @@ export default function CPITrends() {
   const tailGas = useMemo(() => getSparkline("GasCPI"), []);
 
   const C = { cpi: "#122019", food: "#184a31", state: "#c2152e", gas: "#8a6a20" };
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div style={tooltipStyle}>
-        <div className="font-semibold mb-1.5 text-amber-400">{label}</div>
-        {payload.map((p, i) => (
-          <div key={i} className="flex justify-between gap-5">
-            <span style={{ color: p.color }}>{CATEGORY_LABELS[p.dataKey] || p.dataKey}</span>
-            <span className="font-semibold">{p.value}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
+  const unit = ar ? "٪ يومي" : "% DoD";
+  const asOf = `${ar ? "حتى" : "as of"} ${s.lastDate}`;
 
   return (
     <div className="space-y-6">
       {/* Summary readings */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Reading label="CPI overall" value={s.cpi} color={C.cpi} date={s.lastDate}
-          sub={<Change v={s.cpiDoD} />} spark={<Spark values={tailCPI} color={C.cpi} />} />
-        <Reading label="Food overall" value={s.foodOverall} color={C.food} date={s.lastDate}
-          sub={<Change v={s.foodDoD} />} spark={<Spark values={tailFood} color={C.food} />} />
-        <Reading label="Highest category" value={s.highest.value} color={C.state} date={s.lastDate}
-          sub={<span className="text-xs text-slate-500">{s.highest.name}</span>} />
-        <Reading label="Gas CPI" value={s.gas} color={C.gas} date={s.lastDate}
-          sub={<Change v={s.gasDoD} />} spark={<Spark values={tailGas} color={C.gas} />} />
+        <Reading label={ar ? "المؤشّر العام" : "CPI overall"} value={s.cpi} color={C.cpi} date={asOf}
+          sub={<Change v={s.cpiDoD} unit={unit} />} spark={<Spark values={tailCPI} color={C.cpi} />} />
+        <Reading label={ar ? "الغذاء إجمالاً" : "Food overall"} value={s.foodOverall} color={C.food} date={asOf}
+          sub={<Change v={s.foodDoD} unit={unit} />} spark={<Spark values={tailFood} color={C.food} />} />
+        <Reading label={ar ? "أعلى فئة" : "Highest category"} value={s.highest.value} color={C.state} date={asOf}
+          sub={<span className="text-xs text-slate-500">{localizeCpiCategory(locale, s.highest.name)}</span>} />
+        <Reading label={ar ? "مؤشّر الغاز" : "Gas CPI"} value={s.gas} color={C.gas} date={asOf}
+          sub={<Change v={s.gasDoD} unit={unit} />} spark={<Spark values={tailGas} color={C.gas} />} />
       </div>
 
       {/* Category selector */}
       <div>
         <div className="flex items-baseline gap-2.5 mb-2.5">
-          <span className="text-[11px] font-semibold tracking-widest text-brand-700 uppercase">Category selector</span>
-          <span className="font-mono text-[10px] text-slate-400">toggle series · base index = 100</span>
+          <span className="text-[11px] font-semibold tracking-widest text-brand-700 uppercase">{ar ? "محدّد الفئات" : "Category selector"}</span>
+          <span className="font-mono text-[10px] text-slate-400">{ar ? "بدّل السلاسل · أساس المؤشّر = 100" : "toggle series · base index = 100"}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {[...FOOD_CATS, ...AGG_CATS].map((cat) => {
@@ -124,7 +129,7 @@ export default function CPITrends() {
                   borderColor: on ? c + "59" : "#e2e8f0",
                 }}
               >
-                {CATEGORY_LABELS[cat]}
+                {L(cat)}
               </button>
             );
           })}
@@ -134,18 +139,18 @@ export default function CPITrends() {
       {/* Trend chart */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
         <div className="flex items-baseline gap-3 flex-wrap mb-3">
-          <h2 className="text-xl font-bold text-ink font-display">Non-Core CPI — Daily Category Trends</h2>
+          <h2 className="text-xl font-bold text-ink font-display">{ar ? "المؤشّر غير الأساسي — اتجاهات الفئات اليومية" : "Non-Core CPI — Daily Category Trends"}</h2>
           <span className="w-5 h-px bg-amber-500 opacity-60 self-center" />
-          <span className="font-mono text-[11px] text-slate-400">{s.firstDate} — {s.lastDate} · base index = 100</span>
+          <span className="font-mono text-[11px] text-slate-400">{s.firstDate} — {s.lastDate} · {ar ? "أساس المؤشّر = 100" : "base index = 100"}</span>
         </div>
         <ResponsiveContainer width="100%" height={380}>
           <LineChart data={chartData} margin={{ top: 6, right: 18, left: -4, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 4" stroke="#eef2f7" vertical={false} />
             <XAxis dataKey="label" tick={{ fill: "#94a3b8", fontSize: 11, fontFamily: "var(--font-mono)" }} axisLine={{ stroke: "#eef2f7" }} tickLine={false} />
             <YAxis tick={{ fill: "#94a3b8", fontSize: 11, fontFamily: "var(--font-mono)" }} domain={["dataMin - 2", "dataMax + 2"]} axisLine={false} tickLine={false} width={38} />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CpiTooltip locale={locale} />} />
             <ReferenceLine y={100} stroke="#9a7b3f" strokeOpacity={0.7} strokeDasharray="5 4"
-              label={{ value: "base 100", fill: "#806733", fontSize: 10, fontFamily: "var(--font-mono)", position: "insideTopLeft" }} />
+              label={{ value: ar ? "أساس 100" : "base 100", fill: "#806733", fontSize: 10, fontFamily: "var(--font-mono)", position: "insideTopLeft" }} />
             {selected.map((cat) => (
               <Line
                 key={cat}
@@ -166,7 +171,7 @@ export default function CPITrends() {
           {selected.map((cat) => (
             <span key={cat} className="inline-flex items-center gap-1.5 font-mono text-[11px] text-slate-500">
               <span className="w-3 h-0.5 rounded-sm inline-block" style={{ background: CATEGORY_COLORS[cat] }} />
-              {CATEGORY_LABELS[cat]}
+              {L(cat)}
             </span>
           ))}
         </div>
