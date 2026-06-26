@@ -28,10 +28,9 @@ export default async function Home() {
           <h1 className="font-sans font-extrabold tracking-tight leading-[1.02] text-4xl sm:text-6xl">
             {tr("hub.title")}
           </h1>
-          <p className="mt-4 max-w-xl text-paper/60 text-base sm:text-lg leading-relaxed">{tr("hub.subtitle")}</p>
 
           {/* Live stat chips */}
-          <div className="mt-7 flex flex-wrap gap-2.5">
+          <div className="mt-6 flex flex-wrap gap-2.5">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 font-mono text-xs text-paper/80">
               <span className="w-1.5 h-1.5 rounded-full bg-paper/40" />{tr("hub.asOf")} {cpi.lastDate}
             </span>
@@ -43,6 +42,8 @@ export default async function Home() {
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />{tr("hub.fastestMover")}: {localizeCpiCategory(locale, cpi.fastestRising.name)}
             </span>
           </div>
+
+          <p className="mt-6 max-w-xl text-paper/60 text-base sm:text-lg leading-relaxed">{tr("hub.subtitle")}</p>
         </div>
       </div>
 
