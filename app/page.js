@@ -1,6 +1,5 @@
 import Link from "next/link";
 import AskEconomist from "@/components/AskEconomist";
-import { Seal } from "@/components/Navbar";
 import { getCpiSummary } from "@/lib/cpiData";
 import { getLocale } from "@/lib/locale-server";
 import { t, localizeCpiCategory } from "@/lib/i18n";
@@ -26,11 +25,7 @@ export default async function Home() {
         <div className="absolute inset-0 opacity-[0.18]" style={{ backgroundImage: "radial-gradient(circle at 12% 0%, #1f5c3c, transparent 45%), radial-gradient(circle at 92% 10%, #9a7b3f, transparent 42%)" }} />
         <div aria-hidden className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
         <div className="relative max-w-6xl mx-auto px-5 pt-12 pb-24 sm:pt-16 sm:pb-28">
-          <div className="flex items-center gap-3">
-            <Seal className="w-10 h-10" />
-            <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-amber-400">{tr("hub.eyebrow")}</span>
-          </div>
-          <h1 className="mt-6 font-sans font-extrabold tracking-tight leading-[1.02] text-4xl sm:text-6xl">
+          <h1 className="font-sans font-extrabold tracking-tight leading-[1.02] text-4xl sm:text-6xl">
             {tr("hub.title")}
           </h1>
           <p className="mt-4 max-w-xl text-paper/60 text-base sm:text-lg leading-relaxed">{tr("hub.subtitle")}</p>
