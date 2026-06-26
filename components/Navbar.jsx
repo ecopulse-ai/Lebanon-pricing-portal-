@@ -36,7 +36,7 @@ function Logo({ locale }) {
         <span className="block text-base sm:text-2xl lg:text-[1.65rem] font-bold tracking-tight font-display text-ink">
           {locale === "ar"
             ? t("ar", "common.appName")
-            : <>Lebanon Prices: <span className="text-slate-600">Intelligence Unit</span></>}
+            : <>Prices <span className="text-slate-600">Intelligence Unit</span></>}
         </span>
       </span>
     </Link>
