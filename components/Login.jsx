@@ -6,7 +6,7 @@ import { checkCredentials, setAuthed } from "@/lib/auth";
 function Flag({ className = "w-12 h-12" }) {
   return (
     <span className={`inline-grid place-items-center ${className}`}>
-      <svg viewBox="0 0 36 24" className="w-full h-auto rounded-[3px] ring-1 ring-white/20 shadow" preserveAspectRatio="xMidYMid meet">
+      <svg viewBox="0 0 36 24" className="w-full h-auto rounded-[3px] ring-1 ring-black/10 shadow-sm" preserveAspectRatio="xMidYMid meet">
         <rect width="36" height="24" fill="#ffffff" />
         <rect width="36" height="6" fill="#C8102E" />
         <rect y="18" width="36" height="6" fill="#C8102E" />
@@ -37,20 +37,20 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center px-5 py-10 text-paper relative overflow-hidden" style={{ background: "#0c130f" }}>
-      <div className="absolute inset-0 -z-10 opacity-[0.14]" style={{ backgroundImage: "radial-gradient(circle at 18% 15%, #9a7b3f, transparent 40%), radial-gradient(circle at 82% 80%, #1f5c3c, transparent 44%)" }} />
+    <div className="min-h-screen w-full flex items-center justify-center px-5 py-10 text-ink relative overflow-hidden bg-paper">
+      <div className="absolute inset-0 -z-10" style={{ backgroundImage: "radial-gradient(circle at 12% -10%, rgba(31,92,60,0.10), transparent 42%), radial-gradient(circle at 95% 0%, rgba(154,123,63,0.10), transparent 40%)" }} />
 
       <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
         {/* Left — what the portal is & why it matters */}
         <div>
           <Flag className="w-14 h-14" />
-          <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.22em] text-amber-400">République Libanaise</p>
-          <h1 className="mt-1 font-display text-3xl sm:text-4xl font-bold tracking-tight leading-tight">Lebanon Prices Intelligence Unit</h1>
-          <p className="mt-1.5 text-sm text-paper/55">Ministry of Economy &amp; Trade · Office of the Minister</p>
+          <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.22em] text-amber-600">République Libanaise</p>
+          <h1 className="mt-1 font-display text-3xl sm:text-4xl font-bold tracking-tight leading-tight text-ink">Lebanon Prices Intelligence Unit</h1>
+          <p className="mt-1.5 text-sm text-slate-500">Ministry of Economy &amp; Trade · Office of the Minister</p>
 
-          <p className="mt-5 text-[15px] leading-relaxed text-paper/80 max-w-md">
+          <p className="mt-5 text-[15px] leading-relaxed text-slate-600 max-w-md">
             A strategic price-intelligence portal that turns daily signals from Lebanon&apos;s retail and wholesale
-            markets into one dependable read on <span className="text-paper">inflation, affordability and import
+            markets into one dependable read on <span className="text-ink font-medium">inflation, affordability and import
             dependency</span> — so the Ministry sees where prices are heading before the monthly statistics confirm it.
           </p>
 
@@ -62,8 +62,8 @@ export default function Login() {
               ["Brief on demand", "An AI Price Economist on every page, plus a one-click weekly Price Watch for meetings."],
             ].map(([t, d]) => (
               <li key={t} className="flex gap-3">
-                <svg className="w-5 h-5 mt-0.5 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
-                <span className="text-sm leading-relaxed text-paper/70"><span className="font-semibold text-paper">{t}.</span> {d}</span>
+                <svg className="w-5 h-5 mt-0.5 shrink-0 text-brand-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                <span className="text-sm leading-relaxed text-slate-600"><span className="font-semibold text-ink">{t}.</span> {d}</span>
               </li>
             ))}
           </ul>
@@ -71,43 +71,43 @@ export default function Login() {
 
         {/* Right — secure access */}
         <div className="w-full max-w-sm mx-auto lg:mx-0 lg:justify-self-end">
-          <form onSubmit={submit} className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur p-6 space-y-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-paper/45">Secure access</p>
+          <form onSubmit={submit} className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6 space-y-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-slate-500">Secure access</p>
 
             <div>
-              <label className="block text-xs text-paper/60 mb-1.5">Username</label>
+              <label className="block text-xs text-slate-600 mb-1.5">Username</label>
               <input
                 value={user}
                 onChange={(e) => setUser(e.target.value)}
                 autoComplete="username"
                 autoFocus
-                className="w-full rounded-xl border border-white/15 bg-white/[0.06] px-3.5 py-2.5 text-sm text-paper placeholder:text-paper/30 outline-none focus:border-amber-500/60 focus:ring-2 focus:ring-amber-500/20"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-slate-400 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                 placeholder="username"
               />
             </div>
 
             <div>
-              <label className="block text-xs text-paper/60 mb-1.5">Password</label>
+              <label className="block text-xs text-slate-600 mb-1.5">Password</label>
               <input
                 type="password"
                 value={pass}
                 onChange={(e) => setPass(e.target.value)}
                 autoComplete="current-password"
-                className="w-full rounded-xl border border-white/15 bg-white/[0.06] px-3.5 py-2.5 text-sm text-paper placeholder:text-paper/30 outline-none focus:border-amber-500/60 focus:ring-2 focus:ring-amber-500/20"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-slate-400 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
                 placeholder="••••••••"
               />
             </div>
 
-            {error && <p className="text-sm text-red-300">{error}</p>}
+            {error && <p className="text-sm text-red-600">{error}</p>}
 
             <button
               type="submit"
-              className="w-full rounded-xl bg-amber-500 hover:bg-amber-600 text-ink font-semibold py-2.5 transition-colors cursor-pointer"
+              className="w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-2.5 transition-colors cursor-pointer"
             >
               Sign in
             </button>
 
-            <p className="text-center text-[11px] text-paper/35 pt-1">For official use. Authorized personnel only.</p>
+            <p className="text-center text-[11px] text-slate-400 pt-1">For official use. Authorized personnel only.</p>
           </form>
         </div>
       </div>
