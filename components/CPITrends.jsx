@@ -139,7 +139,7 @@ export default function CPITrends({ locale = "en" }) {
       {/* Trend chart */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
         <div className="flex items-baseline gap-3 flex-wrap mb-3">
-          <h2 className="text-xl font-bold text-ink font-display">{ar ? "المؤشّر غير الأساسي — اتجاهات الفئات اليومية" : "Non-Core CPI — Daily Category Trends"}</h2>
+          <h2 className="text-xl font-bold text-ink font-display">{ar ? "مؤشّر التضخم غير الأساسي — اتجاهات الفئات اليومية" : "Non-Core CPI — Daily Category Trends"}</h2>
           <span className="w-5 h-px bg-amber-500 opacity-60 self-center" />
           <span className="font-mono text-[11px] text-slate-400">{s.firstDate} — {s.lastDate} · {ar ? "أساس المؤشّر = 100" : "base index = 100"}</span>
         </div>
