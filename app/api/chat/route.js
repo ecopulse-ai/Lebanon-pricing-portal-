@@ -13,6 +13,21 @@ const SYSTEM = `You are the AI advisor of the Lebanon Prices Intelligence Unit, 
 
 You have four datasets: (1) a NON-CORE DAILY CPI snapshot (category indices, base 100); (2) a LIVE MARKET SNAPSHOT — real measured shelf prices for ~133k items across Lebanese retail, covering price level, affordability, availability and import sourcing as MARKET-LEVEL AGGREGATES; (3) a TRADE & SHIPPING DEPENDENCY view — import single-source concentration by category, supplier blocs, and maritime chokepoint exposure (Suez, etc.); and (4) a RETAIL PRICE snapshot of an illustrative per-product basket (retail/wholesale prices and store). Prefer the LIVE MARKET SNAPSHOT for questions about sourcing, availability or overall price level, and the TRADE & SHIPPING DEPENDENCY view for import-reliance, supplier-diversification or shipping-risk questions; use the others where they fit. These snapshots are cross-sectional — do not describe them as a trend or day-over-day change. NEVER name, rank or compare individual supermarkets or chains; speak only about the market in aggregate.
 
+IMPORTANT — two separate data-source sets, do not conflate them:
+- The NON-CORE DAILY CPI (dataset 1) is built from daily web-scraped prices at **Spinneys, Carrefour, and Al Makhazen**.
+- The LIVE MARKET SNAPSHOT and TRADE & SHIPPING DEPENDENCY views (datasets 2–3) are built from a separate daily catalogue covering **Promarche, Al-Makhazen, and Spinneys**.
+These overlap (Spinneys and Al Makhazen appear in both) but are not the same collection — Carrefour only feeds the CPI; Promarche only feeds the market/trade views. If asked which sources back a given figure, answer according to which dataset the figure came from.
+
+NON-CORE CPI METHODOLOGY (reference this when asked how the CPI is built, what it covers, its base period, or how missing data is handled):
+- Scope: a non-core inflation index covering food (and non-alcoholic beverages) and gasoline only — not the full official CPI basket.
+- Basket weights: interpolated from a comparable Arab country's CPI basket and lightly adjusted to the Lebanese context, since Lebanon-specific item-level weights aren't yet available from the Ministry. Weights will be recalculated once the Ministry provides actual Lebanese food/beverage/gasoline weights.
+- Collection: daily web-scraping of the three sources above for each basket item, followed by cleaning, unit/price standardization, rescaling, and geometric-mean computation before the index is built. Discounted prices are used where shown, since they reflect the actual transaction price paid.
+- Elementary index: for each item, on each day, the geometric mean of matched products within a source gives that source's price; the geometric mean is then taken across sources for the item's final price. Day-to-day, this uses the Jevons formula (geometric mean of price relatives), per the IMF CPI Manual (2020): I_Jevons(0:t) = product of (p_i^t / p_i^0)^(1/n).
+- Base period: 15 June 2026 (index = 100).
+- Higher-level aggregation: elementary Jevons indices are combined via Young's index (a Laspeyres-type index where the weight-reference period can differ from the quantity-reference period): I(0:t) = sum of w_j^b × I_j(0:t), weights summing to 1. This proceeds class → category → division → the final non-core index.
+- Weight cascade: each level's share of its parent is computed from original relative weights, multiplied by the parent's adjusted weight, cascading division → group → class → item; a consistency check confirms items sum to their class, classes to their group, groups to their division, and divisions to 100.
+- Missing data (per IMF 2020 guidance): if one source is missing for an item, use the geometric mean of the available source(s). If both are missing, impute from the average of prior-period geometric means, and flag the item if it's been out of stock for two consecutive weeks (triggering a search for a replacement source). When both sources are present, certain items — notably meat, fruit, and vegetables — follow a priority rule determining which source leads.
+
 Style:
 - Be concise, concrete and grounded ONLY in the DATA SNAPSHOT provided. Never invent products, stores or numbers that aren't supported by it.
 - Prices are in USD unless stated; also reference LBP when helpful (use the given market rate).
@@ -59,6 +74,15 @@ export async function POST(req) {
     );
   }
 
+  // All three now hit live data (Azure Function / Data Lake pipeline) behind
+  // the shared server cache — resolve them once up front rather than calling
+  // async functions inside the template literal below.
+  const [cpiContext, retailContext, tradeContext] = await Promise.all([
+    getCpiContext(),
+    getRetailContext(),
+    getTradeContext(),
+  ]);
+
   const client = new Anthropic();
 
   // Keep a short rolling window of prior turns.
@@ -99,7 +123,7 @@ export async function POST(req) {
             { type: "text", text: SYSTEM + focusNote + langNote },
             {
               type: "text",
-              text: `=== NON-CORE DAILY CPI SNAPSHOT ===\n${getCpiContext()}\n\n=== LIVE MARKET SNAPSHOT (real measured data, market-level) ===\n${getRetailContext()}\n\n=== TRADE & SHIPPING DEPENDENCY (import origins, market-level) ===\n${getTradeContext()}\n\n=== RETAIL PRICE SNAPSHOT (illustrative basket) ===\n${getDataContext()}`,
+              text: `=== NON-CORE DAILY CPI SNAPSHOT ===\n${cpiContext}\n\n=== LIVE MARKET SNAPSHOT (real measured data, market-level) ===\n${retailContext}\n\n=== TRADE & SHIPPING DEPENDENCY (import origins, market-level) ===\n${tradeContext}\n\n=== RETAIL PRICE SNAPSHOT (illustrative basket) ===\n${getDataContext()}`,
               cache_control: { type: "ephemeral" },
             },
           ],

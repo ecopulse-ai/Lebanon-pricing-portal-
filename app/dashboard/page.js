@@ -6,6 +6,7 @@ import {
   getRetailKPIs, getSnapshotMeta, getCategories, getOrigins,
   getPriceBands, getTopBrands,
 } from "@/lib/retailData";
+import { getCpiAvailability } from "@/lib/cpiData";
 import { getLocale } from "@/lib/locale-server";
 import { t, localizeCategory, localizeOrigin } from "@/lib/i18n";
 
@@ -44,16 +45,22 @@ export default async function DashboardPage() {
   const locale = await getLocale();
   const tr = (key) => t(locale, key);
   const ar = locale === "ar";
-  const k = getRetailKPIs();
-  const meta = getSnapshotMeta();
-  const categories = getCategories().map((c) => ({ ...c, name: localizeCategory(locale, c.name) }));
-  const origins = getOrigins().map((o) => ({ ...o, name: localizeOrigin(locale, o.name) }));
-  const bands = getPriceBands();
-  const brands = getTopBrands(8);
+  const [k, meta, rawCategories, rawOrigins, bands, brands, cpiAvail] = await Promise.all([
+    getRetailKPIs(),
+    getSnapshotMeta(),
+    getCategories(),
+    getOrigins(),
+    getPriceBands(),
+    getTopBrands(8),
+    getCpiAvailability(),
+  ]);
+  const categories = rawCategories.map((c) => ({ ...c, name: localizeCategory(locale, c.name) }));
+  const origins = rawOrigins.map((o) => ({ ...o, name: localizeOrigin(locale, o.name) }));
 
   const under5 = Math.round(bands.slice(0, 3).reduce((a, b) => a + b.sharePct, 0) * 10) / 10;
   const above10 = Math.round(bands.slice(-2).reduce((a, b) => a + b.sharePct, 0) * 10) / 10;
-  const outOfStock = Math.round((100 - k.inStockRate) * 10) / 10;
+  const outOfStock = Math.round((100 - k.inStockRate) * 10) / 10; // full retail catalogue — used in the situation callout below, unrelated to the CPI-basket card
+  const cpiOutOfStock = cpiAvail.availabilityPct != null ? Math.round((100 - cpiAvail.availabilityPct) * 10) / 10 : null;
   const topOrigin = origins[0];
 
   return (
@@ -80,7 +87,14 @@ export default async function DashboardPage() {
       <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard label={tr("dash.kpiItems")} value={k.products.toLocaleString()} sub={`${tr("dash.kpiItemsSub")} · ${k.categories} ${tr("dash.kpiCats")}`} />
         <KpiCard label={tr("dash.kpiMedian")} value={`$${k.medianPrice}`} sub={`${tr("dash.kpiMedianSub")} $${k.meanPrice} ${tr("dash.kpiMedianSub2")}`} />
-        <KpiCard label={tr("dash.kpiAvail")} value={`${k.inStockRate}%`} sub={`${outOfStock}% ${tr("dash.kpiAvailSub")}`} tone={k.inStockRate >= 75 ? "down" : "up"} />
+        <KpiCard
+          label={tr("dash.kpiAvail")}
+          value={cpiAvail.availabilityPct != null ? `${cpiAvail.availabilityPct}%` : "—"}
+          sub={cpiAvail.availabilityPct != null
+            ? `${cpiOutOfStock}% ${tr("dash.kpiAvailSub")} (${cpiAvail.flaggedItems}/${cpiAvail.totalItems})`
+            : "unavailable"}
+          tone={cpiAvail.availabilityPct != null && cpiAvail.availabilityPct >= 75 ? "down" : "up"}
+        />
         <KpiCard label={tr("dash.kpiImport")} value={`${k.originCountries} ${tr("dash.kpiImportCountries")}`} sub={`${k.tracedToOriginPct}% ${tr("dash.kpiImportSub")}`} tone="brand" />
       </div>
 

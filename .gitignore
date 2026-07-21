@@ -40,3 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .claude/
+
+# live data — no longer committed; fetched dynamically from Azure Data Lake
+# (lib/etl/pipeline.js) and Azure SQL via the CPI Function proxy
+# (lib/azure/cpi.js) at request time, cached server-side.
+/data/*.json
+/data/*.csv
+

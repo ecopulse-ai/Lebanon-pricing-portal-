@@ -37,26 +37,33 @@ export default async function TradePage() {
   const locale = await getLocale();
   const tr = (k) => t(locale, k);
   const ar = locale === "ar";
-  const meta = getTradeMeta();
-  const tot = getTradeTotals();
+  const [meta, tot, rawConcentration, rawCountries, rawCritical, rawBlocs, rawChokepoints] = await Promise.all([
+    getTradeMeta(),
+    getTradeTotals(),
+    getConcentrationNodes(),
+    getCountriesFull(),
+    getCriticalDependencies(8),
+    getBlocs(),
+    getChokepoints(),
+  ]);
 
-  const concentration = getConcentrationNodes().map((n) => ({
+  const concentration = rawConcentration.map((n) => ({
     ...n,
     label: localizeCategory(locale, n.label),
     source: localizeOrigin(locale, n.source),
     top3: n.top3.map((s) => ({ ...s, name: localizeOrigin(locale, s.name) })),
   }));
-  const countries = getCountriesFull().map((c) => ({
+  const countries = rawCountries.map((c) => ({
     ...c,
     name: localizeOrigin(locale, c.name),
     chokepoints: c.chokepoints.map((ch) => localizeChokepoint(locale, ch)),
     supplies: c.supplies.map((s) => ({ ...s, category: localizeCategory(locale, s.category) })),
   }));
-  const critical = getCriticalDependencies(8).map((c) => ({
+  const critical = rawCritical.map((c) => ({
     ...c, name: localizeCategory(locale, c.name), topSource: localizeOrigin(locale, c.topSource),
   }));
-  const blocs = getBlocs().map((b) => ({ ...b, name: localizeBloc(locale, b.name) }));
-  const chokepoints = getChokepoints().map((c) => ({ ...c, name: localizeChokepoint(locale, c.name) }));
+  const blocs = rawBlocs.map((b) => ({ ...b, name: localizeBloc(locale, b.name) }));
+  const chokepoints = rawChokepoints.map((c) => ({ ...c, name: localizeChokepoint(locale, c.name) }));
   const topBloc = blocs[0];
   const topSupplier = localizeOrigin(locale, tot.topSupplier);
 

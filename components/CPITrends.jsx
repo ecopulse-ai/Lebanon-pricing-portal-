@@ -1,13 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
-import {
-  FOOD_CATS, AGG_CATS, CATEGORY_LABELS, CATEGORY_COLORS,
-  getChartData, getCpiSummary, getSparkline,
-} from "@/lib/cpiData";
+import { FOOD_CATS, AGG_CATS, CATEGORY_LABELS, CATEGORY_COLORS } from "@/lib/cpiData";
 import { localizeCpiCategory } from "@/lib/i18n";
 
 const tooltipStyle = {
@@ -71,11 +68,14 @@ function Reading({ label, value, color, sub, spark, date }) {
   );
 }
 
-export default function CPITrends({ locale = "en" }) {
-  const s = getCpiSummary();
+// summary/chartData/sparklines are fetched server-side (app/cpi/page.js, via
+// lib/cpiData.js → the keyed Azure Function) and passed down as props. This
+// component never talks to the CPI source directly — it's "use client", and
+// the function key must never reach the browser bundle.
+export default function CPITrends({ locale = "en", summary, chartData, sparklines }) {
+  const s = summary;
   const ar = locale === "ar";
   const L = (cat) => localizeCpiCategory(locale, CATEGORY_LABELS[cat]);
-  const chartData = useMemo(() => getChartData(), []);
   const [selected, setSelected] = useState([
     "FruitAndNuts", "BreadAndCereals", "MeatAndPoultry", "FishAndSeafood", "CPI",
   ]);
@@ -83,9 +83,9 @@ export default function CPITrends({ locale = "en" }) {
   const toggle = (cat) =>
     setSelected((prev) => (prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]));
 
-  const tailCPI = useMemo(() => getSparkline("CPI"), []);
-  const tailFood = useMemo(() => getSparkline("FoodOverall"), []);
-  const tailGas = useMemo(() => getSparkline("GasCPI"), []);
+  const tailCPI = sparklines.CPI;
+  const tailFood = sparklines.FoodOverall;
+  const tailGas = sparklines.GasCPI;
 
   const C = { cpi: "#122019", food: "#184a31", state: "#c2152e", gas: "#8a6a20" };
   const unit = ar ? "٪ يومي" : "% DoD";
