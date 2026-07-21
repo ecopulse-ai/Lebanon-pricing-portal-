@@ -137,7 +137,7 @@ export default function EconomistDock({ locale = "en" }) {
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400" />
           </span>
           <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ writingMode: "vertical-rl" }}>
-            {t(locale, "dock.general.title")}
+            {title}
           </span>
           <SealIcon className="w-4 h-4 text-amber-400" />
         </button>

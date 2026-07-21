@@ -13,7 +13,7 @@ const INSTRUMENTS = [
 ];
 
 export default async function Home() {
-  const cpi = getCpiSummary();
+  const cpi = await getCpiSummary();
   const locale = await getLocale();
   const tr = (k) => t(locale, k);
   const up = cpi.cpiDoD >= 0;

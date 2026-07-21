@@ -8,10 +8,10 @@ export async function GET(req) {
 
   const id = searchParams.get("id");
   if (id !== null) {
-    return Response.json({ item: getProductById(id) });
+    return Response.json({ item: await getProductById(id) });
   }
 
-  const res = searchProducts({
+  const res = await searchProducts({
     q: searchParams.get("q") || "",
     cat: searchParams.get("cat") || "All",
     sort: searchParams.get("sort") || "popular",

@@ -1,7 +1,7 @@
 import AskEconomist from "@/components/AskEconomist";
 import CPITrends from "@/components/CPITrends";
 import { CpiDeviationChart } from "@/components/Charts";
-import { getCpiSummary, getLatestSnapshot } from "@/lib/cpiData";
+import { getCpiSummary, getLatestSnapshot, getChartData, getSparkline } from "@/lib/cpiData";
 import { getLocale } from "@/lib/locale-server";
 import { t, localizeCpiCategory } from "@/lib/i18n";
 
@@ -11,11 +11,22 @@ export const metadata = {
 };
 
 export default async function CpiPage() {
-  const s = getCpiSummary();
   const locale = await getLocale();
   const tr = (k) => t(locale, k);
   const ar = locale === "ar";
-  const snapshot = getLatestSnapshot().map((c) => ({ ...c, name: localizeCpiCategory(locale, c.name) }));
+
+  // All hit the same 6h server cache (lib/azure/cpi.js), so this is one
+  // logical fetch of the CPI function, not four.
+  const [s, rawSnapshot, chartData, tailCPI, tailFood, tailGas] = await Promise.all([
+    getCpiSummary(),
+    getLatestSnapshot(),
+    getChartData(),
+    getSparkline("CPI"),
+    getSparkline("FoodOverall"),
+    getSparkline("GasCPI"),
+  ]);
+  const snapshot = rawSnapshot.map((c) => ({ ...c, name: localizeCpiCategory(locale, c.name) }));
+  const sparklines = { CPI: tailCPI, FoodOverall: tailFood, GasCPI: tailGas };
 
   return (
     <div className="max-w-7xl mx-auto w-full px-5 py-8">
@@ -37,7 +48,7 @@ export default async function CpiPage() {
 
       {/* Trends (readings + selector + chart) */}
       <div className="mt-7">
-        <CPITrends locale={locale} />
+        <CPITrends locale={locale} summary={s} chartData={chartData} sparklines={sparklines} />
       </div>
 
       {/* Snapshot + table */}
@@ -86,7 +97,9 @@ export default async function CpiPage() {
       </div>
 
       <p className="mt-6 text-xs text-slate-400 font-mono">
-        {ar ? "المصدر: data/NonCoreCPI_Lebanon.csv · قراءات يومية · أساس المؤشّر = 100." : "Source: data/NonCoreCPI_Lebanon.csv · daily readings · base index = 100."}
+        {ar
+          ? "المصدر: جمع أسعار يومي عبر سبينيز وكارفور والمخازن · مؤشر جيفنز الأولي مجمّع عبر مؤشر يانغ (دليل صندوق النقد الدولي لمؤشر أسعار المستهلك، 2020) · فترة الأساس 15 حزيران 2026 = 100."
+          : "Source: Daily price collection — Spinneys, Carrefour & Al Makhazen · Jevons elementary index aggregated via Young's index (IMF CPI Manual, 2020) · Base period 15 Jun 2026 = 100."}
       </p>
     </div>
   );

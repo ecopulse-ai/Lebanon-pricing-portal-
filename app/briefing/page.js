@@ -15,9 +15,9 @@ export const metadata = {
 export default async function BriefingPage() {
   const locale = await getLocale();
   const tr = (k) => t(locale, k);
-  const b = getPriceWatch(locale);
-  const cpiSnap = getLatestSnapshot().map((c) => ({ name: localizeCpiCategory(locale, c.name), dev: c.dev }));
-  const bands = getPriceBands();
+  const b = await getPriceWatch(locale);
+  const [rawCpiSnap, bands] = await Promise.all([getLatestSnapshot(), getPriceBands()]);
+  const cpiSnap = rawCpiSnap.map((c) => ({ name: localizeCpiCategory(locale, c.name), dev: c.dev }));
 
   return (
     <div className="max-w-4xl mx-auto w-full px-5 py-8 print:py-0 print:px-0">

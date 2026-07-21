@@ -10,11 +10,11 @@ export const metadata = {
 export default async function ProductsPage({ searchParams }) {
   const sp = await searchParams;
   const initialId = typeof sp?.p === "string" ? sp.p : null;
-  const locale = await getLocale();
+  const [locale, categories, meta] = await Promise.all([getLocale(), getCategories(), getCatalogueMeta()]);
   return (
     <ProductsExplorer
-      categories={getCategories()}
-      meta={getCatalogueMeta()}
+      categories={categories}
+      meta={meta}
       initialId={initialId}
       locale={locale}
     />
