@@ -45,7 +45,7 @@ function CpiTooltip({ active, payload, label, locale }) {
       <div className="font-semibold mb-1.5 text-amber-400">{label}</div>
       {payload.map((p, i) => (
         <div key={i} className="flex justify-between gap-5">
-          <span style={{ color: p.color }}>{localizeCpiCategory(locale, CATEGORY_LABELS[p.dataKey] || p.dataKey)}</span>
+          <span style={{ color: p.dataKey === "CPI" ? "#ffffff" : p.color }}>{localizeCpiCategory(locale, CATEGORY_LABELS[p.dataKey] || p.dataKey)}</span>
           <span className="font-semibold">{p.value}</span>
         </div>
       ))}

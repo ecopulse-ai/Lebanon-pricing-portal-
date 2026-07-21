@@ -59,7 +59,6 @@ export default async function DashboardPage() {
 
   const under5 = Math.round(bands.slice(0, 3).reduce((a, b) => a + b.sharePct, 0) * 10) / 10;
   const above10 = Math.round(bands.slice(-2).reduce((a, b) => a + b.sharePct, 0) * 10) / 10;
-  const outOfStock = Math.round((100 - k.inStockRate) * 10) / 10; // full retail catalogue — used in the situation callout below, unrelated to the CPI-basket card
   const cpiOutOfStock = cpiAvail.availabilityPct != null ? Math.round((100 - cpiAvail.availabilityPct) * 10) / 10 : null;
   const topOrigin = origins[0];
 
@@ -104,7 +103,7 @@ export default async function DashboardPage() {
           <span className="font-semibold">{tr("dash.situation")}</span>{" "}
           <span className="font-semibold text-brand-700">{under5}%</span> {tr("dash.sitUnder5")} ${k.medianPrice}),
           {" "}{tr("dash.sitAbove10a")} <span className="font-semibold">{above10}%</span> {tr("dash.sitAbove10b")}
-          {" "}<span className="font-semibold text-cedar">{outOfStock}% {tr("dash.sitOOS")}</span>{tr("dash.sitSupply")}
+          {" "}<span className="font-semibold text-cedar">{cpiOutOfStock ?? "—"}% {tr("dash.sitOOS")}</span>{tr("dash.sitSupply")}
           {" "}<span className="font-semibold">{topOrigin.name} ({topOrigin.sharePct}%)</span>. {tr("dash.sitTrack")}
         </p>
       </div>
