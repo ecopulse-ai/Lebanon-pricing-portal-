@@ -19,6 +19,8 @@ const tooltipStyle = {
   fontFamily: "var(--font-mono)",
   padding: "8px 10px",
 };
+const tooltipLabelStyle = { color: "#fff", fontWeight: 600 };
+const tooltipItemStyle = { color: "#fff" };
 const axisTick = { fill: "#94a3b8", fontSize: 11, fontFamily: "var(--font-mono)" };
 
 export function BasketAreaChart({ data, height = 180 }) {
@@ -34,7 +36,7 @@ export function BasketAreaChart({ data, height = 180 }) {
         <CartesianGrid stroke={GRID} vertical={false} />
         <XAxis dataKey="name" tick={axisTick} tickLine={false} axisLine={false} minTickGap={16} />
         <YAxis tick={axisTick} tickLine={false} axisLine={false} width={34} domain={["dataMin - 4", "dataMax + 4"]} />
-        <Tooltip contentStyle={tooltipStyle} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} />
         <Area type="monotone" dataKey="index" stroke={CEDAR} strokeWidth={2.5} fill="url(#basketFill)" dot={false} activeDot={{ r: 4 }} />
       </AreaChart>
     </ResponsiveContainer>
@@ -48,7 +50,7 @@ export function CategoryTrendChart({ data, height = 280 }) {
         <CartesianGrid stroke={GRID} vertical={false} />
         <XAxis dataKey="name" tick={axisTick} tickLine={false} axisLine={false} />
         <YAxis tick={axisTick} tickLine={false} axisLine={false} width={36} />
-        <Tooltip contentStyle={tooltipStyle} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} />
         <Legend wrapperStyle={{ fontSize: 12, fontFamily: "var(--font-mono)" }} />
         <Line type="monotone" dataKey="Food" stroke={BLUE} strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
         <Line type="monotone" dataKey="Fuel" stroke={AMBER} strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
@@ -65,7 +67,7 @@ export function MarkupBarChart({ data, height = 280 }) {
         <CartesianGrid stroke={GRID} horizontal={false} />
         <XAxis type="number" tick={axisTick} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} />
         <YAxis type="category" dataKey="name" tick={axisTick} tickLine={false} axisLine={false} width={72} />
-        <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v}%`, "Markup"]} cursor={{ fill: "rgba(37,99,235,0.06)" }} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(v) => [`${v}%`, "Markup"]} cursor={{ fill: "rgba(37,99,235,0.06)" }} />
         <Bar dataKey="markup" radius={[0, 5, 5, 0]} barSize={18}>
           {data.map((_, i) => <Cell key={i} fill={i % 2 ? AMBER : BLUE} />)}
         </Bar>
@@ -81,7 +83,7 @@ export function InflationBarChart({ data, height = 240 }) {
         <CartesianGrid stroke={GRID} vertical={false} />
         <XAxis dataKey="name" tick={{ ...axisTick, fontSize: 10 }} tickLine={false} axisLine={false} angle={-20} textAnchor="end" height={48} interval={0} />
         <YAxis tick={axisTick} tickLine={false} axisLine={false} width={34} tickFormatter={(v) => `${v}%`} />
-        <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v}%`, "MoM"]} cursor={{ fill: "rgba(200,16,46,0.06)" }} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(v) => [`${v}%`, "MoM"]} cursor={{ fill: "rgba(200,16,46,0.06)" }} />
         <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={26}>
           {data.map((d, i) => <Cell key={i} fill={d.value >= 0 ? CEDAR : "#10b981"} />)}
         </Bar>
@@ -98,7 +100,7 @@ export function CpiDeviationChart({ data, height = 360 }) {
         <CartesianGrid stroke={GRID} horizontal={false} />
         <XAxis type="number" tick={axisTick} tickLine={false} axisLine={false} tickFormatter={(v) => (v > 0 ? `+${v}` : `${v}`)} />
         <YAxis type="category" dataKey="name" tick={{ ...axisTick, fontSize: 10 }} tickLine={false} axisLine={false} width={120} />
-        <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v > 0 ? "+" : ""}${v} vs 100`, "Deviation"]} cursor={{ fill: "rgba(37,99,235,0.06)" }} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(v) => [`${v > 0 ? "+" : ""}${v} vs 100`, "Deviation"]} cursor={{ fill: "rgba(37,99,235,0.06)" }} />
         <Bar dataKey="dev" radius={[0, 4, 4, 0]} barSize={14}>
           {data.map((d, i) => <Cell key={i} fill={d.dev >= 0 ? CEDAR : "#10b981"} />)}
         </Bar>
@@ -118,7 +120,7 @@ export function RetailerPriceChart({ data, height = 220 }) {
         <CartesianGrid stroke={GRID} horizontal={false} />
         <XAxis type="number" tick={axisTick} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
         <YAxis type="category" dataKey="name" tick={axisTick} tickLine={false} axisLine={false} width={88} />
-        <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`$${v}`, "Median price"]} cursor={{ fill: "rgba(31,92,60,0.06)" }} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(v) => [`$${v}`, "Median price"]} cursor={{ fill: "rgba(31,92,60,0.06)" }} />
         <Bar dataKey="medianPrice" radius={[0, 5, 5, 0]} barSize={20} label={{ position: "right", formatter: (v) => `$${v}`, fill: "#64748b", fontSize: 11, fontFamily: "var(--font-mono)" }}>
           {rows.map((_, i) => <Cell key={i} fill={i === 0 ? BLUE : i === rows.length - 1 ? CEDAR : AMBER} />)}
         </Bar>
@@ -136,7 +138,7 @@ export function AvailabilityChart({ data, height = 220 }) {
         <CartesianGrid stroke={GRID} vertical={false} />
         <XAxis dataKey="name" tick={{ ...axisTick, fontSize: 10 }} tickLine={false} axisLine={false} />
         <YAxis tick={axisTick} tickLine={false} axisLine={false} width={36} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-        <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v}%`, "In stock"]} cursor={{ fill: "rgba(31,92,60,0.06)" }} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(v) => [`${v}%`, "In stock"]} cursor={{ fill: "rgba(31,92,60,0.06)" }} />
         <Bar dataKey="inStockRate" radius={[4, 4, 0, 0]} barSize={40}>
           {rows.map((d, i) => <Cell key={i} fill={d.inStockRate >= 75 ? BLUE : d.inStockRate >= 60 ? AMBER : CEDAR} />)}
         </Bar>
@@ -153,7 +155,7 @@ export function OriginShareChart({ data, height = 360 }) {
         <CartesianGrid stroke={GRID} horizontal={false} />
         <XAxis type="number" tick={axisTick} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} />
         <YAxis type="category" dataKey="name" tick={{ ...axisTick, fontSize: 11 }} tickLine={false} axisLine={false} width={100} />
-        <Tooltip contentStyle={tooltipStyle} formatter={(v, n, p) => [`${v}% · ${p.payload.products.toLocaleString()} items`, "Share"]} cursor={{ fill: "rgba(154,123,63,0.08)" }} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(v, n, p) => [`${v}% · ${p.payload.products.toLocaleString()} items`, "Share"]} cursor={{ fill: "rgba(154,123,63,0.08)" }} />
         <Bar dataKey="sharePct" radius={[0, 5, 5, 0]} barSize={16}>
           {data.map((d, i) => <Cell key={i} fill={d.name === "Other countries" ? "#94a3b8" : i === 0 ? CEDAR : AMBER} />)}
         </Bar>
@@ -170,7 +172,7 @@ export function PriceBandChart({ data, height = 240 }) {
         <CartesianGrid stroke={GRID} vertical={false} />
         <XAxis dataKey="name" tick={{ ...axisTick, fontSize: 10 }} tickLine={false} axisLine={false} />
         <YAxis tick={axisTick} tickLine={false} axisLine={false} width={44} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-        <Tooltip contentStyle={tooltipStyle} formatter={(v, n, p) => [`${v.toLocaleString()} items · ${p.payload.sharePct}%`, "Count"]} cursor={{ fill: "rgba(31,92,60,0.06)" }} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(v, n, p) => [`${v.toLocaleString()} items · ${p.payload.sharePct}%`, "Count"]} cursor={{ fill: "rgba(31,92,60,0.06)" }} />
         <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={38}>
           {data.map((_, i) => <Cell key={i} fill={i < 3 ? BLUE : AMBER} />)}
         </Bar>
@@ -187,7 +189,7 @@ export function CategoryShareChart({ data, height = 420 }) {
         <CartesianGrid stroke={GRID} horizontal={false} />
         <XAxis type="number" tick={axisTick} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} />
         <YAxis type="category" dataKey="name" tick={{ ...axisTick, fontSize: 10 }} tickLine={false} axisLine={false} width={132} />
-        <Tooltip contentStyle={tooltipStyle} formatter={(v, n, p) => [`${v}% · median $${p.payload.medianPrice}`, "Share"]} cursor={{ fill: "rgba(31,92,60,0.06)" }} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(v, n, p) => [`${v}% · median $${p.payload.medianPrice}`, "Share"]} cursor={{ fill: "rgba(31,92,60,0.06)" }} />
         <Bar dataKey="sharePct" radius={[0, 5, 5, 0]} barSize={13}>
           {data.map((_, i) => <Cell key={i} fill={i % 2 ? AMBER : BLUE} />)}
         </Bar>
@@ -209,7 +211,7 @@ export function ProductHistoryChart({ data, height = 260, color = BLUE }) {
         <CartesianGrid stroke={GRID} vertical={false} />
         <XAxis dataKey="name" tick={axisTick} tickLine={false} axisLine={false} />
         <YAxis tick={axisTick} tickLine={false} axisLine={false} width={44} tickFormatter={(v) => `$${v}`} domain={["dataMin - 0.3", "dataMax + 0.3"]} />
-        <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`$${v}`, "Price"]} />
+        <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} formatter={(v) => [`$${v}`, "Price"]} />
         <Area type="monotone" dataKey="price" stroke={color} strokeWidth={2.5} fill="url(#prodFill)" dot={false} activeDot={{ r: 4 }} />
       </AreaChart>
     </ResponsiveContainer>
