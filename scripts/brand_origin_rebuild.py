@@ -1,14 +1,21 @@
 import openpyxl, json
+from datetime import datetime
 
 wb = openpyxl.load_workbook("brand_origin_lookup.xlsx", data_only=True)
-ws = wb["Brands"]
+ws = wb["Sheet1"]
 
 origin = {}
 private_label = []
 spinneys_supplement = []
 
 for r in range(2, ws.max_row + 1):
+
     brand = ws.cell(row=r, column=2).value
+    if isinstance(brand, datetime):
+        print(f"Skipping row {r}: invalid brand {brand!r}")
+        continue
+    brand = str(brand).strip()
+
     am = ws.cell(row=r, column=3).value or 0
     pm = ws.cell(row=r, column=4).value or 0
     sp = ws.cell(row=r, column=5).value or 0
