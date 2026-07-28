@@ -10,6 +10,7 @@ const INSTRUMENTS = [
   { href: "/dashboard", key: "dashboard", n: "02", accent: "#9a7b3f", icon: <><path d="M3 3v18h18" /><path d="M7 15l3-4 3 3 4-6" /></> },
   { href: "/trade", key: "trade", n: "03", accent: "#c2152e", icon: <><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" /><path d="M3 12h18" /><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18" /></> },
   { href: "/products", key: "products", n: "04", accent: "#20655f", icon: <><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" /><path d="M21 21l-4.3-4.3" /></> },
+  { href: "/trade-demo", key: "customsgap", n: "05", accent: "#7b1e3b", external: true, badge: "DEMO", icon: <><circle cx="11" cy="11" r="7" /><path d="m21 21-3.4-3.4" /><path d="M8 11h6" /></> },
 ];
 
 export default async function Home() {
@@ -52,18 +53,20 @@ export default async function Home() {
         <div className="grid sm:grid-cols-2 gap-5">
           {INSTRUMENTS.map((p) => {
             const title = tr(`instruments.${p.key}.title`);
-            return (
-              <Link
-                key={p.href}
-                href={p.href}
-                className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_60px_-24px_rgba(18,32,25,0.45)]"
-              >
+            const cardClass = "group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_60px_-24px_rgba(18,32,25,0.45)]";
+            const inner = (
+              <>
                 <span className="absolute inset-x-0 top-0 h-1.5" style={{ background: p.accent }} />
                 <div className="flex items-start justify-between">
                   <span className="grid place-items-center w-12 h-12 rounded-xl text-white shadow-sm" style={{ background: p.accent }}>
                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">{p.icon}</svg>
                   </span>
-                  <span className="font-mono text-5xl font-black leading-none text-slate-100 group-hover:text-slate-200 transition-colors select-none">{p.n}</span>
+                  <div className="flex items-center gap-2">
+                    {p.badge && (
+                      <span className="rounded-full px-2 py-0.5 text-[10px] font-bold tracking-widest text-white" style={{ background: p.accent }}>{p.badge}</span>
+                    )}
+                    <span className="font-mono text-5xl font-black leading-none text-slate-100 group-hover:text-slate-200 transition-colors select-none">{p.n}</span>
+                  </div>
                 </div>
                 <h2 className="mt-5 text-xl font-bold tracking-tight text-ink">{title}</h2>
                 <p className="mt-2 text-sm text-slate-500 leading-relaxed">{tr(`instruments.${p.key}.body`)}</p>
@@ -71,7 +74,12 @@ export default async function Home() {
                   {tr("common.open")} {title}
                   <svg className="w-4 h-4 rtl:scale-x-[-1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
                 </span>
-              </Link>
+              </>
+            );
+            return p.external ? (
+              <a key={p.href} href={p.href} className={cardClass}>{inner}</a>
+            ) : (
+              <Link key={p.href} href={p.href} className={cardClass}>{inner}</Link>
             );
           })}
         </div>
