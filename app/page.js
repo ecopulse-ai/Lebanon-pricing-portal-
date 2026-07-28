@@ -43,7 +43,7 @@ export default async function Home() {
             </span>
           </div>
 
-          <p className="mt-6 max-w-xl text-paper/60 text-base sm:text-lg leading-relaxed">{tr("hub.subtitle")}</p>
+          <p className="mt-6 max-w-2xl text-amber-300 font-bold text-xl sm:text-3xl leading-snug">{tr("hub.subtitle")}</p>
         </div>
       </div>
 
