@@ -5,7 +5,7 @@ import { getLocale } from "@/lib/locale-server";
 export const metadata = {
   title: "Lebanon's Price Transparency Model — Prices Intelligence Unit",
   description:
-    "A near-zero-cost policy model to cut Lebanon's cost of living: mandate retailers to publish machine-readable shelf prices and let the market do the monitoring — with the live catalogue as proof.",
+    "Lebanon's Price Transparency Model — live shelf-price analytics: how much the same product varies across outlets, the widest-spread items to flag, and per-standard-unit comparisons across brands and pack sizes.",
 };
 
 function Stat({ big, label, tone = "brand" }) {
