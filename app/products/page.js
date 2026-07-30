@@ -1,5 +1,5 @@
 import ProductsExplorer from "@/components/ProductsExplorer";
-import { getCategories, getCatalogueMeta, getPriceDispersion } from "@/lib/products";
+import { getCategories, getCatalogueMeta, getPriceDispersion, getUnitPriceWatch } from "@/lib/products";
 import { getLocale } from "@/lib/locale-server";
 
 export const metadata = {
@@ -143,20 +143,87 @@ function PriceDispersion({ ar, data }) {
   );
 }
 
+function UnitPriceWatch({ ar, data }) {
+  const { top, goods } = data;
+  if (!top || top.length === 0) return null;
+  return (
+    <div className="max-w-7xl mx-auto w-full px-5 pt-2">
+      <span className="eyebrow">{ar ? "لكل وحدة قياسية" : "Per standard unit"}</span>
+      <h2 className="mt-2 text-2xl sm:text-3xl font-semibold font-display text-ink">
+        {ar ? "السلعة نفسها — لكن أغلى لكل 100غ / 100مل / حبة" : "The same good — but dearer per 100g / 100ml / piece"}
+      </h2>
+      <p className="mt-2 text-slate-600 max-w-3xl leading-relaxed">
+        {ar
+          ? `بعد تحويل كل منتج إلى سعرٍ لكل وحدة قياسية عبر ${goods.toLocaleString()} سلعة قابلة للمقارنة، إليك السلع التي يتفاوت سعرها لكل وحدة أكثر من غيرها بين العلامات والأحجام — حيث يخفي الحجم الأكبر أحياناً سعراً أعلى للوحدة.`
+          : `Normalizing every product to a price per standard unit across ${goods.toLocaleString()} comparable goods, here are the goods whose per-unit price varies most across brands and pack sizes — where a bigger pack can quietly cost more per unit.`}
+      </p>
+
+      <div className="mt-5 rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100">
+          <h3 className="font-semibold text-ink">
+            {ar ? "أوسع تفاوت في السعر لكل وحدة" : "Widest per-unit price gap, by good"}
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {ar
+              ? "مقارنة على أساس السعر لكل وحدة قياسية عبر العلامات والأحجام · أسماء المنافذ محجوبة"
+              : "Compared on price per standard unit across brands & pack sizes · outlet names withheld"}
+          </p>
+        </div>
+        <div className="overflow-x-auto scroll-thin">
+          <table className="w-full text-sm">
+            <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60">
+              <tr>
+                <th className="px-4 py-3 font-medium">#</th>
+                <th className="px-4 py-3 font-medium">{ar ? "السلعة" : "Good"}</th>
+                <th className="px-4 py-3 font-medium">{ar ? "لكل" : "Per"}</th>
+                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الأرخص" : "Cheapest"}</th>
+                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الوسيط" : "Median"}</th>
+                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الأغلى" : "Dearest"}</th>
+                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الفارق" : "Spread"}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {top.map((g, i) => (
+                <tr key={`${g.cat}-${g.good}`} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-4 py-2.5 text-slate-400 font-mono">{i + 1}</td>
+                  <td className="px-4 py-2.5">
+                    <div className="font-medium text-ink">{g.good}</div>
+                    <div className="text-xs text-slate-500">
+                      {g.cat} · {g.variants} {ar ? "خيارات" : "variants"} · {g.listings} {ar ? "إدراج" : "listings"}
+                    </div>
+                  </td>
+                  <td className="px-4 py-2.5 font-mono text-xs text-slate-500">{g.unit}</td>
+                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono text-emerald-600">${g.lo.toFixed(2)}</td>
+                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono text-slate-600">${g.med.toFixed(2)}</td>
+                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono text-cedar">${g.hi.toFixed(2)}</td>
+                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono font-semibold text-ink">+{g.spreadPct}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div className="mt-8 border-t border-slate-200" />
+    </div>
+  );
+}
+
 export default async function ProductsPage({ searchParams }) {
   const sp = await searchParams;
   const initialId = typeof sp?.p === "string" ? sp.p : null;
-  const [locale, categories, meta, dispersion] = await Promise.all([
+  const [locale, categories, meta, dispersion, unitWatch] = await Promise.all([
     getLocale(),
     getCategories(),
     getCatalogueMeta(),
-    getPriceDispersion({ topN: 10, minListings: 5 }),
+    getPriceDispersion({ topN: 10 }),
+    getUnitPriceWatch({ topN: 10 }),
   ]);
   const ar = locale === "ar";
   return (
     <>
       <TransparencyIntro ar={ar} />
       <PriceDispersion ar={ar} data={dispersion} />
+      <UnitPriceWatch ar={ar} data={unitWatch} />
       <ProductsExplorer categories={categories} meta={meta} initialId={initialId} locale={locale} />
     </>
   );
