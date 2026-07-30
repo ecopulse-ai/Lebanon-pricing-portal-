@@ -137,14 +137,6 @@ export default async function DashboardPage() {
           </ul>
         </Panel>
       </div>
-
-      {/* Provenance */}
-      <p className="mt-6 text-xs text-slate-400 leading-relaxed max-w-3xl">
-        {ar
-          ? "لقطة مقطعية لرفوف التجزئة في لبنان عبر عدة سلاسل. جُمعت في أيام مختلفة، فالأرقام موضعية (مستوى السعر، التوفّر، المصدر) — لا سلسلة زمنية."
-          : meta.note}{" "}
-        {tr("dash.provenance")} {meta.source} ({meta.rawCategories} {tr("dash.provNorm")} {k.categories} {tr("dash.provGroups")})
-      </p>
     </div>
   );
 }
