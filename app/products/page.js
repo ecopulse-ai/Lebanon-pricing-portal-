@@ -102,8 +102,8 @@ function PriceDispersion({ ar, data }) {
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
             {ar
-              ? "الفارق بين أرخص وأغلى منفذ للمنتج نفسه · أسماء المنافذ محجوبة"
-              : "Gap between the cheapest and dearest outlet for the same product · outlet names withheld"}
+              ? "الفارق بين السعر المنخفض والمرتفع المعتاد عبر المنافذ للمنتج نفسه (بعد استبعاد الإدراجات الشاذة أو المختلفة الوحدة) · أسماء المنافذ محجوبة"
+              : "Typical low-to-high across outlets for the same product (lone mispriced / odd-unit listings excluded) · outlet names withheld"}
           </p>
         </div>
         <div className="overflow-x-auto scroll-thin">
