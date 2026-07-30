@@ -4,13 +4,12 @@ import { getCpiSummary } from "@/lib/cpiData";
 import { getLocale } from "@/lib/locale-server";
 import { t, localizeCpiCategory } from "@/lib/i18n";
 
-// The four instruments shown on the portal hub after sign-in.
+// The instruments shown on the portal hub after sign-in.
 const INSTRUMENTS = [
   { href: "/cpi", key: "cpi", n: "01", accent: "#1f5c3c", icon: <path d="M3 12h3l2.5-7 4 14 3-9 2 4h3.5" /> },
-  { href: "/dashboard", key: "dashboard", n: "02", accent: "#9a7b3f", icon: <><path d="M3 3v18h18" /><path d="M7 15l3-4 3 3 4-6" /></> },
+  { href: "/products", key: "products", n: "02", accent: "#20655f", icon: <><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" /><path d="M21 21l-4.3-4.3" /></> },
   { href: "/trade", key: "trade", n: "03", accent: "#c2152e", icon: <><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" /><path d="M3 12h18" /><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18" /></> },
-  { href: "/products", key: "products", n: "04", accent: "#20655f", icon: <><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" /><path d="M21 21l-4.3-4.3" /></> },
-  { href: "/trade-demo", key: "customsgap", n: "05", accent: "#7b1e3b", external: true, badge: "DEMO", icon: <><circle cx="11" cy="11" r="7" /><path d="m21 21-3.4-3.4" /><path d="M8 11h6" /></> },
+  { href: "/trade-demo", key: "customsgap", n: "04", accent: "#7b1e3b", external: true, badge: "DEMO", icon: <><circle cx="11" cy="11" r="7" /><path d="m21 21-3.4-3.4" /><path d="M8 11h6" /></> },
 ];
 
 export default async function Home() {

@@ -22,9 +22,8 @@ export default function Footer({ locale = "en" }) {
           <h3 className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-400">{tr("footer.instruments")}</h3>
           <ul className="mt-3 space-y-2 text-sm text-paper/70">
             <li><Link href="/cpi" className="hover:text-paper">{tr("instruments.cpi.title")}</Link></li>
-            <li><Link href="/dashboard" className="hover:text-paper">{tr("instruments.dashboard.title")}</Link></li>
-            <li><Link href="/trade" className="hover:text-paper">{tr("instruments.trade.title")}</Link></li>
             <li><Link href="/products" className="hover:text-paper">{tr("instruments.products.title")}</Link></li>
+            <li><Link href="/trade" className="hover:text-paper">{tr("instruments.trade.title")}</Link></li>
           </ul>
         </div>
 
