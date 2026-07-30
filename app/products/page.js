@@ -1,5 +1,5 @@
 import ProductsExplorer from "@/components/ProductsExplorer";
-import { getCategories, getCatalogueMeta } from "@/lib/products";
+import { getCategories, getCatalogueMeta, getPriceDispersion } from "@/lib/products";
 import { getLocale } from "@/lib/locale-server";
 
 export const metadata = {
@@ -81,14 +81,82 @@ function TransparencyIntro({ ar }) {
   );
 }
 
+function PriceDispersion({ ar, data }) {
+  const { top, medianSpread, trackedProducts, shareOver25, minListings } = data;
+  return (
+    <div className="max-w-7xl mx-auto w-full px-5 pt-8">
+      <span className="eyebrow">{ar ? "المشكلة بالأرقام" : "The problem, quantified"}</span>
+      <h2 className="mt-2 text-2xl sm:text-3xl font-semibold font-display text-ink">
+        {ar ? "المنتج نفسه… بسعرٍ مختلف" : "The same product, a different price"}
+      </h2>
+      <p className="mt-2 text-slate-600 max-w-3xl leading-relaxed">
+        {ar
+          ? `عبر ${trackedProducts.toLocaleString()} منتجاً متتبَّعاً في ${minListings} منافذ فأكثر، يتقاضى المنفذ الأغلى — للمنتج نفسه — سعراً أعلى بنسبةٍ وسيطة ${medianSpread}% من الأرخص، و${shareOver25}% من المنتجات تتفاوت بأكثر من 25%. هذا التشتّت بالضبط هو ما يقلّصه نموذج الشفافية.`
+          : `Across ${trackedProducts.toLocaleString()} products tracked at ${minListings}+ outlets, the dearest shelf charges a median ${medianSpread}% more than the cheapest for the same item — and ${shareOver25}% of products vary by more than 25%. That dispersion is exactly what the transparency model collapses.`}
+      </p>
+
+      <div className="mt-5 rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100">
+          <h3 className="font-semibold text-ink">
+            {ar ? "أعلى 10 سلع للمراقبة — الأوسع تفاوتاً" : "Top 10 items to flag — widest price spread"}
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {ar
+              ? "الفارق بين أرخص وأغلى منفذ للمنتج نفسه · أسماء المنافذ محجوبة"
+              : "Gap between the cheapest and dearest outlet for the same product · outlet names withheld"}
+          </p>
+        </div>
+        <div className="overflow-x-auto scroll-thin">
+          <table className="w-full text-sm">
+            <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60">
+              <tr>
+                <th className="px-4 py-3 font-medium">#</th>
+                <th className="px-4 py-3 font-medium">{ar ? "المنتج" : "Product"}</th>
+                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الأرخص" : "Cheapest"}</th>
+                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الوسيط" : "Median"}</th>
+                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الأغلى" : "Dearest"}</th>
+                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الفارق" : "Spread"}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {top.map((p, i) => (
+                <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-4 py-2.5 text-slate-400 font-mono">{i + 1}</td>
+                  <td className="px-4 py-2.5">
+                    <div className="font-medium text-ink">{p.name}</div>
+                    <div className="text-xs text-slate-500">
+                      {[p.brand, p.cat].filter(Boolean).join(" · ")} · {p.n} {ar ? "إدراج" : "listings"}
+                    </div>
+                  </td>
+                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono text-emerald-600">${p.min.toFixed(2)}</td>
+                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono text-slate-600">${p.med.toFixed(2)}</td>
+                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono text-cedar">${p.max.toFixed(2)}</td>
+                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono font-semibold text-ink">+{p.spreadPct}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div className="mt-8 border-t border-slate-200" />
+    </div>
+  );
+}
+
 export default async function ProductsPage({ searchParams }) {
   const sp = await searchParams;
   const initialId = typeof sp?.p === "string" ? sp.p : null;
-  const [locale, categories, meta] = await Promise.all([getLocale(), getCategories(), getCatalogueMeta()]);
+  const [locale, categories, meta, dispersion] = await Promise.all([
+    getLocale(),
+    getCategories(),
+    getCatalogueMeta(),
+    getPriceDispersion({ topN: 10, minListings: 5 }),
+  ]);
   const ar = locale === "ar";
   return (
     <>
       <TransparencyIntro ar={ar} />
+      <PriceDispersion ar={ar} data={dispersion} />
       <ProductsExplorer categories={categories} meta={meta} initialId={initialId} locale={locale} />
     </>
   );
