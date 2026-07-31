@@ -1,5 +1,6 @@
 import ProductsExplorer from "@/components/ProductsExplorer";
 import { getCategories, getCatalogueMeta, getPriceDispersion, getUnitPriceWatch } from "@/lib/products";
+import { getForensicWatch } from "@/lib/basketData";
 import { getLocale } from "@/lib/locale-server";
 
 export const metadata = {
@@ -173,6 +174,123 @@ function UnitPriceWatch({ ar, data }) {
   );
 }
 
+function ChainFlagCard({ ar, c, top, totalCats }) {
+  const flagged = c.name === top.name;
+  return (
+    <div className={`rounded-2xl border p-5 ${flagged ? "border-cedar/40 bg-cedar/5" : "border-slate-200 bg-white"}`}>
+      <div className="flex items-center justify-between">
+        <span className="font-semibold text-ink">{c.name}</span>
+        {flagged && (
+          <span className="text-[10px] uppercase tracking-wide font-mono text-cedar border border-cedar/40 rounded-full px-2 py-0.5">
+            {ar ? "الأبرز" : "Top flag"}
+          </span>
+        )}
+      </div>
+      <div className="mt-2 text-2xl font-bold font-mono text-ink">${c.medianPrice}</div>
+      <div className="text-xs text-slate-500">{ar ? "الوسيط للسلعة" : "median item"}</div>
+      <div className="mt-2 text-xs">
+        <span className={c.premiumVsCheapest > 0 ? "text-cedar font-medium" : "text-slate-400"}>
+          {c.premiumVsCheapest > 0 ? "+" : ""}{c.premiumVsCheapest}% {ar ? "فوق الأرخص" : "vs cheapest"}
+        </span>
+        <span className="text-slate-400"> · {ar ? "الأغلى في" : "dearest in"} {c.dearestInCats}/{totalCats}</span>
+      </div>
+    </div>
+  );
+}
+
+function FlagTable({ ar, title, sub, cols, rows }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-100">
+        <h3 className="font-semibold text-ink">{title}</h3>
+        <p className="text-xs text-slate-500 mt-0.5">{sub}</p>
+      </div>
+      <div className="overflow-x-auto scroll-thin">
+        <table className="w-full text-sm">
+          <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60">
+            <tr>
+              <th className="px-4 py-3 font-medium">{cols[0]}</th>
+              <th className="px-4 py-3 font-medium">{cols[1]}</th>
+              <th className="px-4 py-3 font-medium text-right rtl:text-left">{cols[2]}</th>
+              <th className="px-4 py-3 font-medium text-right rtl:text-left">{cols[3]}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">{rows}</tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function InspectionWatch({ ar, data }) {
+  const { asOf, chainDates, totalCats, chains, categories, items } = data;
+  if (!chains || chains.length === 0) return null;
+  const top = chains[0];
+  const cd = chainDates ? Object.entries(chainDates).map(([c, d]) => `${c} ${d}`).join(" · ") : "";
+  const cat0 = categories[0];
+  const it0 = items[0];
+  const advice = ar
+    ? `${top.name} هي الأغلى إجمالاً (الوسيط $${top.medianPrice}، +${top.premiumVsCheapest}% فوق أرخص منافس) والأعلى سعراً في ${top.dearestInCats} من ${totalCats} فئة. أولوية للمراجعة: ${cat0?.category} (الأغلى ${cat0?.dearest}، +${cat0?.gap}% مقابل ${cat0?.cheapest})${it0 ? `، وحالات شاذّة على مستوى الصنف مثل ${it0.item} (+${it0.gap}% لدى ${it0.dearCh})` : ""}. التوصية: نشر أسعار مرجعية للأصناف الأوسع فجوةً، وإعطاء الأولوية للتفتيش المستهدف حيث يرتفع منفذ واحد كثيراً فوق أقرانه على السلع الأساسية — الشفافية والمراجعة المستهدفة بدل سقوف الأسعار.`
+    : `${top.name} is the dearest chain overall (median $${top.medianPrice}, +${top.premiumVsCheapest}% above the cheapest peer) and the most expensive in ${top.dearestInCats} of ${totalCats} categories. Priority for review: ${cat0?.category} (dearest ${cat0?.dearest}, +${cat0?.gap}% vs ${cat0?.cheapest})${it0 ? `, and item-level outliers such as ${it0.item} (+${it0.gap}% at ${it0.dearCh})` : ""}. Recommendation: publish reference prices for the widest-gap items, and prioritise targeted inspection where a single chain sits far above peers on staples — transparency and targeted review over blanket price caps.`;
+
+  return (
+    <div className="max-w-7xl mx-auto w-full px-5 pt-8">
+      <span className="eyebrow text-cedar">{ar ? "وحدة استخبارات الأسعار · رصد تدقيقي" : "Price Intelligence Unit · Forensic Watch"}</span>
+      <h2 className="mt-2 text-2xl sm:text-3xl font-semibold font-display text-ink">
+        {ar ? "رصد التفتيش — منافذ وأصناف تستحقّ تدقيقاً" : "Inspection Watch — chains & items worth a closer look"}
+      </h2>
+
+      <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-50/60 px-4 py-2.5 text-xs text-ink leading-relaxed">
+        {ar
+          ? `مؤشّرات إحصائية لترتيب أولويات المراجعة — وليست إثباتاً لمخالفة. قد يكون المنفذ أغلى لأسبابٍ مشروعة؛ الإشارة الأقوى صنفٌ يرتفع كثيراً فوق أقرانه. بيانات مقطعية (${cd || asOf}) — قارِن المستويات لا يوماً بعينه.`
+          : `Statistical flags to prioritise review — not findings of wrongdoing. A chain may be dearer for legitimate reasons; the stronger signal is a single item far above peers. Cross-sectional data (${cd || asOf}) — compare levels, not a single day.`}
+      </div>
+
+      <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {chains.map((c) => <ChainFlagCard key={c.name} ar={ar} c={c} top={top} totalCats={totalCats} />)}
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-cedar/30 bg-white px-5 py-4">
+        <div className="eyebrow text-cedar mb-1">{ar ? "توصية لنائب الوزير" : "Advice to the Deputy Minister"}</div>
+        <p className="text-sm sm:text-[15px] text-ink leading-relaxed">{advice}</p>
+      </div>
+
+      <div className="mt-5 grid lg:grid-cols-2 gap-5">
+        <FlagTable
+          ar={ar}
+          title={ar ? "فئات للمراجعة" : "Categories to review"}
+          sub={ar ? "أوسع فجوة بين المنافذ · المنفذ الأغلى مُسمّى" : "Widest chain gap · dearest chain named"}
+          cols={[ar ? "الفئة" : "Category", ar ? "الأغلى" : "Dearest", ar ? "الأرخص" : "Cheapest", ar ? "الفجوة" : "Gap"]}
+          rows={categories.map((c) => (
+            <tr key={c.category} className="hover:bg-slate-50 transition-colors">
+              <td className="px-4 py-2.5 text-ink">{c.category}</td>
+              <td className="px-4 py-2.5"><span className="font-medium text-cedar">{c.dearest}</span> <span className="font-mono text-xs text-slate-500">${c.dearestPrice}</span></td>
+              <td className="px-4 py-2.5 text-right rtl:text-left"><span className="text-emerald-600">{c.cheapest}</span> <span className="font-mono text-xs text-slate-500">${c.cheapestPrice}</span></td>
+              <td className="px-4 py-2.5 text-right rtl:text-left font-mono font-semibold text-ink">+{c.gap}%</td>
+            </tr>
+          ))}
+        />
+        <FlagTable
+          ar={ar}
+          title={ar ? "أصناف شاذّة للتفتيش" : "Outlier items to inspect"}
+          sub={ar ? "نفس الصنف · أغلى منفذ مقابل أرخص منفذ" : "Same item · dearest vs cheapest chain"}
+          cols={[ar ? "الصنف" : "Item", ar ? "الأغلى" : "Dearest", ar ? "الأرخص" : "Cheapest", ar ? "الفجوة" : "Gap"]}
+          rows={items.map((r) => (
+            <tr key={r.item} className="hover:bg-slate-50 transition-colors">
+              <td className="px-4 py-2.5"><div className="text-ink">{r.item}</div><div className="text-xs text-slate-400">{r.category}{r.nChains < 3 ? ` · ${r.nChains}/3` : ""}</div></td>
+              <td className="px-4 py-2.5"><span className="font-medium text-cedar">{r.dearCh}</span> <span className="font-mono text-xs text-slate-500">${r.dearP}</span></td>
+              <td className="px-4 py-2.5 text-right rtl:text-left"><span className="text-emerald-600">{r.cheapCh}</span> <span className="font-mono text-xs text-slate-500">${r.cheapP}</span></td>
+              <td className="px-4 py-2.5 text-right rtl:text-left font-mono font-semibold text-ink">+{r.gap}%</td>
+            </tr>
+          ))}
+        />
+      </div>
+
+      <div className="mt-8 border-t border-slate-200" />
+    </div>
+  );
+}
+
 export default async function ProductsPage({ searchParams }) {
   const sp = await searchParams;
   const initialId = typeof sp?.p === "string" ? sp.p : null;
@@ -184,9 +302,11 @@ export default async function ProductsPage({ searchParams }) {
     getUnitPriceWatch({ topN: 10 }),
   ]);
   const ar = locale === "ar";
+  const forensic = getForensicWatch();
   return (
     <>
       <TransparencyIntro ar={ar} meta={meta} dispersion={dispersion} />
+      <InspectionWatch ar={ar} data={forensic} />
       <PriceDispersion ar={ar} data={dispersion} />
       <UnitPriceWatch ar={ar} data={unitWatch} />
       <ProductsExplorer categories={categories} meta={meta} initialId={initialId} locale={locale} />
