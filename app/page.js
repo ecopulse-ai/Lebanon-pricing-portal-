@@ -12,10 +12,31 @@ const INSTRUMENTS = [
   { href: "/trade-demo", key: "customsgap", n: "04", accent: "#7b1e3b", external: true, badge: "DEMO", icon: <><circle cx="11" cy="11" r="7" /><path d="m21 21-3.4-3.4" /><path d="M8 11h6" /></> },
 ];
 
+// The Ministry's three mandates, and the instruments that serve each — so anyone
+// signing in understands what this portal is for.
+const PILLARS = [
+  {
+    key: "consumer", accent: "#1f5c3c", uses: [["/cpi", "cpi"], ["/products", "products"]],
+    en: { t: "Consumer protection", d: "Read inflation before the official monthly figures, and see where the same goods cost more — so Lebanese households aren't squeezed." },
+    ar: { t: "حماية المستهلك", d: "قراءة التضخّم قبل الأرقام الشهرية الرسمية، ورؤية أين تُكلّف السلع نفسها أكثر — كي لا تُثقَل كواهل الأسر اللبنانية." },
+  },
+  {
+    key: "competition", accent: "#20655f", uses: [["/products", "products"]],
+    en: { t: "Competition", d: "Compare like-for-like prices across supermarkets per standard unit and flag outlier markups worth inspecting — keeping the market fair." },
+    ar: { t: "المنافسة", d: "مقارنة الأسعار لكل وحدة قياسية بين المتاجر، ورصد الهوامش الشاذّة الجديرة بالتفتيش — للحفاظ على سوقٍ عادلة." },
+  },
+  {
+    key: "supply", accent: "#c2152e", uses: [["/trade", "trade"], ["/trade-demo", "customsgap"]],
+    en: { t: "Supply security", d: "Map import dependence, single-source concentration and maritime chokepoints — and catch customs under-invoicing — so essential goods keep flowing." },
+    ar: { t: "أمن التوريد", d: "رسم خريطة الاعتماد على الاستيراد وتركّز المصدر الواحد ومضايق الشحن — وكشف تبخيس القيمة الجمركية — كي تبقى السلع الأساسية متدفّقة." },
+  },
+];
+
 export default async function Home() {
   const cpi = await getCpiSummary();
   const locale = await getLocale();
   const tr = (k) => t(locale, k);
+  const ar = locale === "ar";
   const up = cpi.cpiDoD >= 0;
 
   return (
@@ -90,6 +111,49 @@ export default async function Home() {
             <svg className="w-4 h-4 rtl:scale-x-[-1]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
           </Link>
           <AskEconomist label={tr("hub.consult")} className="px-4 py-2.5" />
+        </div>
+      </div>
+
+      {/* ── Purpose: the Ministry's three mandates ──────────────── */}
+      <div className="border-t border-slate-200 bg-slate-50/60">
+        <div className="max-w-6xl mx-auto px-5 py-14">
+          <div className="max-w-3xl">
+            <span className="eyebrow">{ar ? "الغاية" : "What this portal is for"}</span>
+            <h2 className="mt-2 text-2xl sm:text-3xl font-semibold font-display text-ink">
+              {ar ? "أداةٌ واحدة لحماية المواطن اللبناني على ثلاث جبهات" : "One instrument set to protect the Lebanese citizen on three fronts"}
+            </h2>
+            <p className="mt-3 text-slate-600 leading-relaxed">
+              {ar
+                ? "تمنح وحدة استخبارات الأسعار الوزارة مكاناً واحداً لرصد حماية المستهلك والمنافسة وأمن التوريد — بتحويل بيانات الأسعار والتجارة اليومية إلى قرارات، عبر الأدوات الأربع أدناه."
+                : "The Prices Intelligence Unit gives the Ministry one place to track consumer protection, competition and supply security — turning daily price and trade data into decisions, through the four instruments below."}
+            </p>
+          </div>
+
+          <div className="mt-8 grid md:grid-cols-3 gap-5">
+            {PILLARS.map((p) => {
+              const L = ar ? p.ar : p.en;
+              return (
+                <div key={p.key} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6">
+                  <span className="absolute inset-x-0 top-0 h-1" style={{ background: p.accent }} />
+                  <h3 className="text-lg font-bold text-ink">{L.t}</h3>
+                  <p className="mt-2 text-sm text-slate-600 leading-relaxed">{L.d}</p>
+                  <div className="mt-4">
+                    <div className="text-[11px] uppercase tracking-wider font-mono text-slate-400 mb-2">{ar ? "عبر" : "Powered by"}</div>
+                    <div className="flex flex-wrap gap-2">
+                      {p.uses.map(([href, key]) => {
+                        const label = tr(`instruments.${key}.title`);
+                        const chip = "inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 px-2.5 py-1 text-xs font-medium text-ink transition-colors";
+                        const dot = <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.accent }} />;
+                        return key === "customsgap"
+                          ? <a key={href} href={href} className={chip}>{dot}{label}</a>
+                          : <Link key={href} href={href} className={chip}>{dot}{label}</Link>;
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
