@@ -21,7 +21,7 @@ Schema handled (both variants — Spinneys: `stock`; Carrefour: `stock`+`stock_s
   base_unit, stock|stock_status, price, discount_price, url, image_url,
   category_l1, category_l2, lebanon_category, date
 """
-import csv, json, os, glob, statistics
+import csv, json, os, glob, re, statistics
 from collections import defaultdict, Counter
 
 BASKET_DIR = "data/baskets"
@@ -92,6 +92,63 @@ def mean(xs):
     return round(statistics.mean(xs), 2) if xs else 0
 
 
+# ── Size normalization ────────────────────────────────────────────────────────
+# The feed is price-per-listed-product, so a 900g pack can't be compared to a
+# 500g one directly. Parse the `weight` (with unit token where present, e.g.
+# Carrefour "900G"/"1KG"/"500ML"; or a bare number in the base unit, e.g.
+# Spinneys grams) into a base quantity + unit family so downstream code can
+# compute a common-unit price ($/100g, $/100ml, $/piece) — apples-to-apples.
+QTY_RE = re.compile(
+    r"(\d+(?:[.,]\d+)?)\s*(kg|kgs|kilograms?|g|gr|grams?|mg|l|lt|ltr|liters?|litres?|ml|cl|cc|pcs|pc|pieces?)\b",
+    re.I,
+)
+PACK_RE = re.compile(r"(\d+)\s*[x×]", re.I)
+
+
+def parse_qty(weight):
+    """Return (base_qty, family) where family in {mass, vol, count, None}.
+    base_qty is grams (mass), ml (vol) or pieces (count). None if not derivable."""
+    s = str(weight or "").strip().lower()
+    if not s:
+        return (None, None)
+    pack = 1
+    pm = PACK_RE.search(s)
+    if pm:
+        pack = int(pm.group(1)) or 1
+    m = QTY_RE.search(s)
+    if m:
+        val = float(m.group(1).replace(",", "."))
+        u = m.group(2).lower()
+        if u.startswith(("kg", "kilogram")):
+            fam, base = "mass", val * 1000
+        elif u in ("g", "gr") or u.startswith("gram"):
+            fam, base = "mass", val
+        elif u == "mg":
+            fam, base = "mass", val * 0.001
+        elif u in ("l", "lt", "ltr") or u.startswith(("liter", "litre")):
+            fam, base = "vol", val * 1000
+        elif u == "cl":
+            fam, base = "vol", val * 10
+        elif u in ("ml", "cc"):
+            fam, base = "vol", val
+        elif u in ("pcs", "pc") or u.startswith("piece"):
+            fam, base = "count", val
+        else:
+            return (None, None)
+        base *= pack
+        return (base, fam) if base > 0 else (None, None)
+    # Bare number: treat as a base quantity in g/ml only when it's clearly one
+    # (>= 20). Smaller bare numbers are ambiguous (kg / L / a count) — skip.
+    try:
+        v = float(s.replace(",", "")) * pack
+    except ValueError:
+        return (None, None)
+    return (v, None) if v >= 20 else (None, None)
+
+
+UNIT_LABEL = {"mass": "100g", "vol": "100ml", "count": "pc", None: "100u"}
+
+
 # ── Parse every basket file ───────────────────────────────────────────────────
 files = sorted(glob.glob(os.path.join(BASKET_DIR, "*.csv")) +
                glob.glob(os.path.join(BASKET_DIR, "*.xlsx")))
@@ -107,6 +164,7 @@ for path in files:
         if eff is None:
             continue                                   # unpriced row — skip
         code, cat_name = split_category(row.get("lebanon_category"))
+        bq, fam = parse_qty(row.get("weight"))
         records.append({
             "chain": chain_of(row),
             "date": (row.get("date") or "").strip(),
@@ -115,6 +173,8 @@ for path in files:
             "cat_code": code,
             "category": cat_name,
             "product": (row.get("product_name") or row.get("name") or "").strip(),
+            "base_qty": bq,
+            "family": fam,
             "price": round(eff, 2),
             "discounted": disc is not None and price is not None and disc < price,
             "in_stock": in_stock(row),
@@ -208,9 +268,26 @@ for (code, item), rs in item_groups.items():
             by_chain[r["chain"]] = {
                 "price": r["price"], "product": r["product"], "url": r["url"],
                 "img": r["img"], "inStock": r["in_stock"], "discounted": r["discounted"],
+                "base_qty": r["base_qty"], "family": r["family"],
             }
     prices = [v["price"] for v in by_chain.values()]
     lo, hi = min(prices), max(prices)
+
+    # Common-unit (size-normalized) price per chain: $/100g, $/100ml or $/piece.
+    fams = [v["family"] for v in by_chain.values() if v.get("family")]
+    item_fam = Counter(fams).most_common(1)[0][0] if fams else None
+    unit_by_chain = {}
+    for ch, v in by_chain.items():
+        bq = v.get("base_qty")
+        if bq and bq > 0:
+            up = v["price"] / bq if item_fam == "count" else v["price"] / bq * 100
+            unit_by_chain[ch] = round(up, 3)
+    ups = list(unit_by_chain.values())
+    unit_spread = round(100 * (max(ups) - min(ups)) / min(ups)) if len(ups) >= 2 and min(ups) > 0 else None
+    for v in by_chain.values():           # keep byChain schema lean
+        v.pop("base_qty", None)
+        v.pop("family", None)
+
     items.append({
         "code": code,
         "cpi_item": item,
@@ -218,6 +295,9 @@ for (code, item), rs in item_groups.items():
         "min": lo,
         "median": med(prices),
         "spreadPct": round(100 * (hi - lo) / lo, 0) if lo > 0 and len(prices) >= 2 else 0,
+        "unit": UNIT_LABEL[item_fam],
+        "unitByChain": dict(sorted(unit_by_chain.items())),
+        "unitSpreadPct": unit_spread,
         "byChain": dict(sorted(by_chain.items())),
     })
 items.sort(key=lambda x: (x["code"]))
