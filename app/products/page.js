@@ -225,7 +225,6 @@ function InspectionWatch({ ar, data }) {
   const { asOf, chainDates, comparedItems, chains, categories, items } = data;
   if (!chains || chains.length === 0) return null;
   const top = chains[0];
-  const cd = chainDates ? Object.entries(chainDates).map(([c, d]) => `${c} ${d}`).join(" · ") : "";
   const cat0 = categories[0];
   const it0 = items[0];
   const advice = ar
@@ -239,18 +238,12 @@ function InspectionWatch({ ar, data }) {
         {ar ? "رصد التفتيش — منافذ وأصناف تستحقّ تدقيقاً" : "Inspection Watch — chains & items worth a closer look"}
       </h2>
 
-      <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-50/60 px-4 py-2.5 text-xs text-ink leading-relaxed">
-        {ar
-          ? `مقارنة موحّدة لكل وحدة ($/100غ · $/100مل · $/حبة) — أبل مقابل أبل، لا مقارنة أحجام مختلفة (${comparedItems} صنفاً قابلاً للمقارنة). مؤشّرات لترتيب أولويات المراجعة — وليست إثباتاً لمخالفة؛ قد يكون المنفذ أغلى لأسبابٍ مشروعة. بيانات مقطعية (${cd || asOf}).`
-          : `Size-normalized to a common unit ($/100g · $/100ml · $/piece) — apples-to-apples, not mixed pack sizes (${comparedItems} comparable items). Flags to prioritise review, not findings of wrongdoing; a chain may be dearer for legitimate reasons. Cross-sectional data (${cd || asOf}).`}
-      </div>
-
       <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
         {chains.map((c) => <ChainFlagCard key={c.name} ar={ar} c={c} top={top} />)}
       </div>
 
       <div className="mt-4 rounded-2xl border border-cedar/30 bg-white px-5 py-4">
-        <div className="eyebrow text-cedar mb-1">{ar ? "توصية لنائب الوزير" : "Advice to the Deputy Minister"}</div>
+        <div className="eyebrow text-cedar mb-1">{ar ? "توصية لوحدة حماية الأسعار" : "Advice to the Price Protection Unit"}</div>
         <p className="text-sm sm:text-[15px] text-ink leading-relaxed">{advice}</p>
       </div>
 
