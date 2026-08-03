@@ -7,6 +7,15 @@ import { getPriceBands } from "@/lib/retailData";
 import { getLocale } from "@/lib/locale-server";
 import { t, localizeCpiCategory } from "@/lib/i18n";
 
+// Without this, Next.js's default static-optimization tries to prerender
+// this page AT BUILD TIME -- which means the build itself would attempt a
+// live call to Azure (Data Lake / SQL). If that call is slow, blocked, or
+// unreachable from the build environment, the build can fail or hang with
+// no clear error, since the failure happens during page-data collection,
+// not at a normal runtime request. force-dynamic defers all data fetching
+// to actual request time instead, same as the API routes already do.
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Price Watch — Weekly Brief | Lebanon Prices Intelligence Unit",
   description: "Auto-generated weekly Price Watch note: inflation pulse, affordability and import-dependency for the Office of the Minister.",
