@@ -47,3 +47,13 @@ next-env.d.ts
 /data/*.json
 /data/*.csv
 
+# EXCEPTIONS -- these ARE committed on purpose, despite the blanket rule
+# above. basket_prices.json and productMap.json are statically IMPORTED at
+# build time (lib/basketData.js, lib/etl/productMap.js) -- if either is
+# missing, `next build` fails outright with "Module not found" (confirmed:
+# this is what broke the Vercel build). classes.csv is the source-of-truth
+# category-mapping input scripts/build_basket.py reads. None of these three
+# are live caches; they must stay tracked.
+!/data/basket_prices.json
+!/data/classes.csv
+!/data/productMap.json

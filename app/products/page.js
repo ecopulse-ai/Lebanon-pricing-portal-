@@ -167,29 +167,29 @@ function AllCategoriesTable({ ar, rows }) {
   );
 }
 
-// function FlagTable({ ar, title, sub, cols, rows }) {
-//   return (
-//     <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-//       <div className="px-5 py-4 border-b border-slate-100">
-//         <h3 className="font-semibold text-ink">{title}</h3>
-//         <p className="text-xs text-slate-500 mt-0.5">{sub}</p>
-//       </div>
-//       <div className="overflow-x-auto scroll-thin">
-//         <table className="w-full text-sm">
-//           <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60">
-//             <tr>
-//               <th className="px-4 py-3 font-medium">{cols[0]}</th>
-//               <th className="px-4 py-3 font-medium">{cols[1]}</th>
-//               <th className="px-4 py-3 font-medium text-right rtl:text-left">{cols[2]}</th>
-//               <th className="px-4 py-3 font-medium text-right rtl:text-left">{cols[3]}</th>
-//             </tr>
-//           </thead>
-//           <tbody className="divide-y divide-slate-100">{rows}</tbody>
-//         </table>
-//       </div>
-//     </div>
-//   );
-// }
+function FlagTable({ ar, title, sub, cols, rows }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-100">
+        <h3 className="font-semibold text-ink">{title}</h3>
+        <p className="text-xs text-slate-500 mt-0.5">{sub}</p>
+      </div>
+      <div className="overflow-x-auto scroll-thin">
+        <table className="w-full text-sm">
+          <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60">
+            <tr>
+              <th className="px-4 py-3 font-medium">{cols[0]}</th>
+              <th className="px-4 py-3 font-medium">{cols[1]}</th>
+              <th className="px-4 py-3 font-medium text-right rtl:text-left">{cols[2]}</th>
+              <th className="px-4 py-3 font-medium text-right rtl:text-left">{cols[3]}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">{rows}</tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 function InspectionWatch({ ar, data }) {
   const { chains, categoryGaps, items, comparedItems, usingEqualWeights, chainDates, activeChains, partialCoverageProducts } = data;
@@ -242,7 +242,7 @@ function InspectionWatch({ ar, data }) {
         <AllCategoriesTable ar={ar} rows={categoryGaps} />
       </div>
 
-      {/* <div className="mt-5">
+      <div className="mt-5">
         <FlagTable
           ar={ar}
           title={ar ? "أصناف شاذّة للتفتيش" : "Outlier items to inspect"}
@@ -269,7 +269,7 @@ function InspectionWatch({ ar, data }) {
             </tr>
           ))}
         />
-      </div> */}
+      </div>
 
       {partialCoverageProducts?.length > 0 && (
         <div className="mt-5 rounded-2xl border border-amber-300/60 bg-amber-50/40 overflow-hidden">
