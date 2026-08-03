@@ -1,6 +1,5 @@
 import AskEconomist from "@/components/AskEconomist";
 import CPITrends from "@/components/CPITrends";
-import { CpiDeviationChart } from "@/components/Charts";
 import { getCpiSummary, getLatestSnapshot, getChartData, getSparkline } from "@/lib/cpiData";
 import { getLocale } from "@/lib/locale-server";
 import { t, localizeCpiCategory } from "@/lib/i18n";
@@ -51,17 +50,9 @@ export default async function CpiPage() {
         <CPITrends locale={locale} summary={s} chartData={chartData} sparklines={sparklines} />
       </div>
 
-      {/* Snapshot + table */}
-      <div className="mt-6 grid lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3 rounded-2xl border border-slate-200 bg-white p-5">
-          <h2 className="font-semibold text-ink">{ar ? "أحدث لقطة للفئات" : "Latest category snapshot"}</h2>
-          <p className="text-xs text-slate-500 mt-0.5">{ar ? "الانحراف عن أساس 100" : "Deviation from base 100"} · {s.lastDate}</p>
-          <div className="mt-4">
-            <CpiDeviationChart data={snapshot} height={380} />
-          </div>
-        </div>
-
-        <div className="lg:col-span-2 rounded-2xl border border-slate-200 bg-white overflow-hidden">
+      {/* Category table */}
+      <div className="mt-6">
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100">
             <h2 className="font-semibold text-ink">{ar ? "جدول الفئات" : "Category table"}</h2>
             <p className="text-xs text-slate-500 mt-0.5">{ar ? "المؤشّر والتغيّر اليومي" : "Index & day-over-day change"}</p>

@@ -60,6 +60,52 @@ export function CategoryTrendChart({ data, height = 280 }) {
   );
 }
 
+// Floating/range bar: one horizontal bar per item, spanning [cheapest, dearest]
+// unit price across the named chains, with the geometric-mean reference price
+// marked. Every chain's actual price is in the tooltip — nothing is withheld,
+// unlike the old anonymized Price Dispersion table this replaces.
+function DispersionTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0]?.payload;
+  if (!row) return null;
+  const chains = Object.entries(row.byChain || {}).sort((a, b) => a[1] - b[1]);
+  return (
+    <div style={{ ...tooltipStyle, padding: "10px 12px", minWidth: 200 }}>
+      <div style={{ ...tooltipLabelStyle, marginBottom: 4 }}>{row.item}</div>
+      <div style={{ opacity: 0.75, marginBottom: 6 }}>{row.category} · per {row.unit}</div>
+      {chains.map(([ch, price]) => (
+        <div key={ch} style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
+          <span>{ch}{ch === row.dearChain ? " (dearest)" : ch === row.cheapChain ? " (cheapest)" : ""}</span>
+          <span>${price}</span>
+        </div>
+      ))}
+      <div style={{ marginTop: 6, opacity: 0.75 }}>Geometric mean: ${row.geoMean}</div>
+      <div style={{ opacity: 0.75 }}>Gap vs. geo. mean: +{row.gapPct}%</div>
+    </div>
+  );
+}
+
+export function PriceDispersionRangeChart({ rows, height = 420 }) {
+  const data = rows.map((r) => ({
+    ...r,
+    range: [r.byChain[r.cheapChain] ?? 0, r.byChain[r.dearChain] ?? 0],
+  }));
+  const maxVal = Math.max(0, ...data.map((d) => d.range[1]));
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 0 }} barCategoryGap={14}>
+        <CartesianGrid stroke={GRID} horizontal={false} />
+        <XAxis type="number" domain={[0, Math.ceil(maxVal * 1.15 * 100) / 100]} tick={axisTick} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
+        <YAxis type="category" dataKey="item" tick={axisTick} tickLine={false} axisLine={false} width={150} />
+        <Tooltip content={<DispersionTooltip />} cursor={{ fill: "rgba(31,92,60,0.06)" }} />
+        <Bar dataKey="range" radius={[4, 4, 4, 4]} barSize={16}>
+          {data.map((_, i) => <Cell key={i} fill={CEDAR} fillOpacity={0.85} />)}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
 export function MarkupBarChart({ data, height = 280 }) {
   return (
     <ResponsiveContainer width="100%" height={height}>

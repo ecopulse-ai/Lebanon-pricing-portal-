@@ -11,16 +11,18 @@ function priceLabel(p) {
   return p.min === p.max ? `$${p.med.toFixed(2)}` : `$${p.min.toFixed(2)}–$${p.max.toFixed(2)}`;
 }
 
-export default function ProductsExplorer({ categories = [], meta = {}, initialId = null, locale = "en" }) {
+export default function ProductsExplorer({ categories = [], retailers = [], meta = {}, initialId = null, locale = "en" }) {
   const tr = (k) => t(locale, k);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All");
+  const [retailer, setRetailer] = useState("All");
   const [sort, setSort] = useState("popular");
 
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [selected, setSelected] = useState(null);
   const reqId = useRef(0);
 
@@ -34,19 +36,24 @@ export default function ProductsExplorer({ categories = [], meta = {}, initialId
   const fetchPage = useCallback(async (p, replace) => {
     const id = ++reqId.current;
     setLoading(true);
-    const params = new URLSearchParams({ q, cat, sort, page: String(p), pageSize: "50" });
+    setError(null);
+    const params = new URLSearchParams({ q, cat, retailer, sort, page: String(p), pageSize: "50" });
     try {
       const res = await fetch(`/api/products?${params}`);
+      if (!res.ok) throw new Error(`Product search request failed (${res.status})`);
       const data = await res.json();
       if (id !== reqId.current) return;
-      setTotal(data.total);
+      setTotal(data.total ?? 0);
       setPage(p);
-      setItems((prev) => (replace ? data.items : [...prev, ...data.items]));
-      if (replace) setSelected((cur) => cur || data.items[0] || null);
+      setItems((prev) => (replace ? (data.items || []) : [...prev, ...(data.items || [])]));
+      if (replace) setSelected((cur) => cur || data.items?.[0] || null);
+    } catch (err) {
+      console.error("[ProductsExplorer] search failed:", err);
+      if (id === reqId.current) setError(tr("products.searchError") || "Search failed — please try again.");
     } finally {
       if (id === reqId.current) setLoading(false);
     }
-  }, [q, cat, sort]);
+  }, [q, cat, retailer, sort]);
 
   useEffect(() => {
     const id = setTimeout(() => fetchPage(1, true), 220);
@@ -95,6 +102,15 @@ export default function ProductsExplorer({ categories = [], meta = {}, initialId
           {categories.map((c) => <option key={c} value={c}>{localizeCategory(locale, c)}</option>)}
         </select>
         <select
+          value={retailer}
+          onChange={(e) => setRetailer(e.target.value)}
+          className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 cursor-pointer"
+          aria-label="Filter by retailer"
+        >
+          <option value="All">{locale === "ar" ? "كل المنافذ" : "All retailers"}</option>
+          {retailers.map((r) => <option key={r} value={r}>{r}</option>)}
+        </select>
+        <select
           value={sort}
           onChange={(e) => setSort(e.target.value)}
           className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 cursor-pointer"
@@ -103,6 +119,12 @@ export default function ProductsExplorer({ categories = [], meta = {}, initialId
           {SORTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
       </div>
+
+      {error && (
+        <div className="mt-4 rounded-xl border border-cedar/30 bg-cedar/5 px-4 py-3 text-sm text-cedar">
+          {error}
+        </div>
+      )}
 
       <div className="mt-6 grid lg:grid-cols-5 gap-6">
         {/* List */}
@@ -127,6 +149,13 @@ export default function ProductsExplorer({ categories = [], meta = {}, initialId
                       <div className="min-w-0">
                         <p className={`text-sm font-medium truncate ${active ? "text-brand-800" : "text-ink"}`}>{p.name}</p>
                         <p className="text-xs text-slate-500 truncate">{localizeCategory(locale, p.cat)}{p.brand ? ` · ${p.brand}` : ""}{p.unit ? ` · ${p.unit}` : ""}</p>
+                        {p.retailers?.length > 0 && (
+                          <p className="mt-0.5 flex flex-wrap gap-1">
+                            {p.retailers.map((r) => (
+                              <span key={r} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{r}</span>
+                            ))}
+                          </p>
+                        )}
                       </div>
                       <div className="text-end shrink-0">
                         <p className="text-sm font-mono font-semibold">${p.med.toFixed(2)}</p>
@@ -190,6 +219,9 @@ function ProductDetail({ p, locale = "en" }) {
             <span className={`text-xs px-2 py-0.5 rounded-full ${p.stock ? "bg-brand-50 text-brand-700" : "bg-red-50 text-cedar"}`}>
               {p.stock ? tr("products.inStock") : tr("products.outOfStock")}
             </span>
+            {p.retailers?.map((r) => (
+              <span key={r} className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{r}</span>
+            ))}
           </div>
           <h2 className="mt-2 text-2xl font-bold text-ink leading-tight">{p.name}</h2>
           <p className="text-sm text-slate-500">
@@ -237,6 +269,39 @@ function ProductDetail({ p, locale = "en" }) {
         </div>
         <p className="mt-3 text-[11px] text-slate-400 leading-relaxed">{tr("products.rangeNote")}</p>
       </div>
+
+      {p.linked && p.bySource && (
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-ink">{locale === "ar" ? "مقارنة عبر المنافذ" : "Price by retailer"}</h3>
+            <span className="font-mono text-[10px] text-slate-400">
+              {locale === "ar" ? "مطابقة مؤكّدة: الفئة، الحجم، العلامة" : "confident match: category + size + brand"}
+            </span>
+          </div>
+          <div className="rounded-xl border border-slate-200 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60">
+                <tr>
+                  <th className="px-3 py-2 font-medium">{locale === "ar" ? "المنفذ" : "Retailer"}</th>
+                  <th className="px-3 py-2 font-medium">{locale === "ar" ? "المنتج" : "Listing"}</th>
+                  <th className="px-3 py-2 font-medium text-right rtl:text-left">{locale === "ar" ? "السعر" : "Price"}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {Object.entries(p.bySource)
+                  .sort((a, b) => a[1].price - b[1].price)
+                  .map(([retailer, s]) => (
+                    <tr key={retailer}>
+                      <td className="px-3 py-2 font-medium text-ink">{retailer}</td>
+                      <td className="px-3 py-2 text-slate-500 truncate max-w-[220px]">{s.name}</td>
+                      <td className="px-3 py-2 text-right rtl:text-left font-mono">${s.price.toFixed(2)}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

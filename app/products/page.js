@@ -1,12 +1,13 @@
 import ProductsExplorer from "@/components/ProductsExplorer";
-import { getCategories, getCatalogueMeta, getPriceDispersion, getUnitPriceWatch } from "@/lib/products";
-import { getForensicWatch } from "@/lib/basketData";
+import { PriceDispersionRangeChart } from "@/components/Charts";
+import { getCategories, getCatalogueMeta, getRetailers } from "@/lib/products";
+import { getForensicWatch, getBasketPriceDispersion, getBasketDispersionStats } from "@/lib/basketData";
 import { getLocale } from "@/lib/locale-server";
 
 export const metadata = {
   title: "Lebanon's Price Transparency Model — Prices Intelligence Unit",
   description:
-    "Lebanon's Price Transparency Model — live shelf-price analytics: how much the same product varies across outlets, the widest-spread items to flag, and per-standard-unit comparisons across brands and pack sizes.",
+    "Lebanon's Price Transparency Model — live shelf-price analytics: how much the same product varies across outlets, the widest-spread items to flag, and per-unit comparisons across named chains.",
 };
 
 function Stat({ big, label, tone = "brand" }) {
@@ -18,11 +19,11 @@ function Stat({ big, label, tone = "brand" }) {
   );
 }
 
-function TransparencyIntro({ ar, meta, dispersion }) {
+function TransparencyIntro({ ar, meta, dispStats }) {
   const products = (meta?.products || 0).toLocaleString("en-US");
   const listings = (meta?.listings || 0).toLocaleString("en-US");
-  const medSpread = dispersion?.medianSpread ?? 0;
-  const share25 = dispersion?.shareOver25 ?? 0;
+  const medSpread = dispStats?.medianGapPct ?? 0;
+  const share25 = dispStats?.shareOver25Pct ?? 0;
   return (
     <div className="max-w-7xl mx-auto w-full px-5 pt-8">
       <span className="eyebrow">{ar ? "الأداة الرابعة · شفافية الأسعار" : "Instrument IV · Price Transparency"}</span>
@@ -31,15 +32,15 @@ function TransparencyIntro({ ar, meta, dispersion }) {
       </h1>
       <p className="mt-3 text-lg sm:text-xl font-semibold text-brand-700 max-w-3xl leading-snug">
         {ar
-          ? `اليوم، المنتج نفسه قد يكلّف أكثر بنسبة ${medSpread}% تبعاً لمكان الشراء — و${share25}% من السلع اليومية تتفاوت بأكثر من الربع. نشر الأسعار يُغلق هذه الفجوة.`
-          : `Today, the same product can cost ${medSpread}% more depending on where you shop — and ${share25}% of everyday items vary by over a quarter. Publishing prices closes that gap.`}
+          ? `على العيّنة القابلة للمقارنة عبر المنافذ الثلاثة، السلعة نفسها قد تكلّف أكثر بنسبة ${medSpread}% تبعاً لمكان الشراء — و${share25}% من الأصناف تتفاوت بأكثر من الربع مقابل المتوسط الهندسي. نشر الأسعار يُغلق هذه الفجوة.`
+          : `Across the items comparable at all three chains, the same product can cost ${medSpread}% more depending on where you shop — and ${share25}% of items vary by over a quarter against the geometric-mean price. Publishing prices closes that gap.`}
       </p>
 
       <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat big={products} label={ar ? "منتج تُرصد أسعاره يومياً" : "products priced every day"} />
+        <Stat big={products} label={ar ? "منتج تُرصد أسعاره يومياً (كتالوج السوق الحيّ)" : "products priced every day (live market catalogue)"} />
         <Stat big={listings} label={ar ? "نقطة سعرٍ تُستوعب يومياً" : "shelf price points ingested daily"} />
-        <Stat big={`${medSpread}%`} tone="cedar" label={ar ? "فجوة وسيطة: الأرخص مقابل الأغلى للسلعة نفسها" : "median gap · cheapest vs dearest, same item"} />
-        <Stat big={`${share25}%`} tone="cedar" label={ar ? "من السلع تتفاوت بأكثر من 25% بين المنافذ" : "of items vary >25% across outlets"} />
+        <Stat big={`${medSpread}%`} tone="cedar" label={ar ? "فجوة وسيطة عبر السلة المقارنة (مقابل المتوسط الهندسي)" : "median gap across the comparable basket (vs. geometric mean)"} />
+        <Stat big={`${share25}%`} tone="cedar" label={ar ? "من الأصناف تتفاوت بأكثر من 25%" : "of items vary >25% vs. geometric mean"} />
       </div>
 
       <div className="mt-8 border-t border-slate-200" />
@@ -47,135 +48,9 @@ function TransparencyIntro({ ar, meta, dispersion }) {
   );
 }
 
-function PriceDispersion({ ar, data }) {
-  const { top } = data;
-  return (
-    <div className="max-w-7xl mx-auto w-full px-5 pt-8">
-      <span className="eyebrow">{ar ? "المشكلة بالأرقام" : "The problem, quantified"}</span>
-      <h2 className="mt-2 text-2xl sm:text-3xl font-semibold font-display text-ink">
-        {ar ? "المنتج نفسه… بسعرٍ مختلف" : "The same product, a different price"}
-      </h2>
-      <p className="mt-2 text-slate-600 max-w-3xl leading-relaxed">
-        {ar
-          ? "هذه السلع تُظهر أوسع الفجوات — حيث يتأرجح سعر المنتج نفسه أكثر ما يكون بين المنافذ. هذا التشتّت بالضبط هو ما يقلّصه نموذج الشفافية."
-          : "These items show the widest gaps — where the same product's price swings most between outlets. This is exactly the dispersion a transparency mandate collapses."}
-      </p>
-
-      <div className="mt-5 rounded-2xl border border-slate-200 bg-white overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100">
-          <h3 className="font-semibold text-ink">
-            {ar ? "أعلى 10 سلع للمراقبة — الأوسع تفاوتاً" : "Top 10 items to flag — widest price spread"}
-          </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {ar
-              ? "الفارق بين السعر المنخفض والمرتفع المعتاد عبر المنافذ للمنتج نفسه (بعد استبعاد الإدراجات الشاذة أو المختلفة الوحدة) · أسماء المنافذ محجوبة"
-              : "Typical low-to-high across outlets for the same product (lone mispriced / odd-unit listings excluded) · outlet names withheld"}
-          </p>
-        </div>
-        <div className="overflow-x-auto scroll-thin">
-          <table className="w-full text-sm">
-            <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60">
-              <tr>
-                <th className="px-4 py-3 font-medium">#</th>
-                <th className="px-4 py-3 font-medium">{ar ? "المنتج" : "Product"}</th>
-                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الأرخص" : "Cheapest"}</th>
-                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الوسيط" : "Median"}</th>
-                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الأغلى" : "Dearest"}</th>
-                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الفارق" : "Spread"}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {top.map((p, i) => (
-                <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-2.5 text-slate-400 font-mono">{i + 1}</td>
-                  <td className="px-4 py-2.5">
-                    <div className="font-medium text-ink">{p.name}</div>
-                    <div className="text-xs text-slate-500">
-                      {[p.brand, p.cat].filter(Boolean).join(" · ")} · {p.n} {ar ? "إدراج" : "listings"}
-                    </div>
-                  </td>
-                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono text-emerald-600">${p.min.toFixed(2)}</td>
-                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono text-slate-600">${p.med.toFixed(2)}</td>
-                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono text-cedar">${p.max.toFixed(2)}</td>
-                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono font-semibold text-ink">+{p.spreadPct}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div className="mt-8 border-t border-slate-200" />
-    </div>
-  );
-}
-
-function UnitPriceWatch({ ar, data }) {
-  const { top, goods } = data;
-  if (!top || top.length === 0) return null;
-  return (
-    <div className="max-w-7xl mx-auto w-full px-5 pt-2">
-      <span className="eyebrow">{ar ? "لكل وحدة قياسية" : "Per standard unit"}</span>
-      <h2 className="mt-2 text-2xl sm:text-3xl font-semibold font-display text-ink">
-        {ar ? "السلعة نفسها — لكن أغلى لكل 100غ / 100مل / حبة" : "The same good — but dearer per 100g / 100ml / piece"}
-      </h2>
-      <p className="mt-2 text-slate-600 max-w-3xl leading-relaxed">
-        {ar
-          ? `بعد تحويل كل منتج إلى سعرٍ لكل وحدة قياسية عبر ${goods.toLocaleString()} سلعة قابلة للمقارنة، إليك السلع التي يتفاوت سعرها لكل وحدة أكثر من غيرها بين العلامات والأحجام — حيث يخفي الحجم الأكبر أحياناً سعراً أعلى للوحدة.`
-          : `Normalizing every product to a price per standard unit across ${goods.toLocaleString()} comparable goods, here are the goods whose per-unit price varies most across brands and pack sizes — where a bigger pack can quietly cost more per unit.`}
-      </p>
-
-      <div className="mt-5 rounded-2xl border border-slate-200 bg-white overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100">
-          <h3 className="font-semibold text-ink">
-            {ar ? "أوسع تفاوت في السعر لكل وحدة" : "Widest per-unit price gap, by good"}
-          </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {ar
-              ? "مقارنة على أساس السعر لكل وحدة قياسية عبر العلامات والأحجام · أسماء المنافذ محجوبة"
-              : "Compared on price per standard unit across brands & pack sizes · outlet names withheld"}
-          </p>
-        </div>
-        <div className="overflow-x-auto scroll-thin">
-          <table className="w-full text-sm">
-            <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60">
-              <tr>
-                <th className="px-4 py-3 font-medium">#</th>
-                <th className="px-4 py-3 font-medium">{ar ? "السلعة" : "Good"}</th>
-                <th className="px-4 py-3 font-medium">{ar ? "لكل" : "Per"}</th>
-                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الأرخص" : "Cheapest"}</th>
-                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الوسيط" : "Median"}</th>
-                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الأغلى" : "Dearest"}</th>
-                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الفارق" : "Spread"}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {top.map((g, i) => (
-                <tr key={`${g.cat}-${g.good}`} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-2.5 text-slate-400 font-mono">{i + 1}</td>
-                  <td className="px-4 py-2.5">
-                    <div className="font-medium text-ink">{g.good}</div>
-                    <div className="text-xs text-slate-500">
-                      {g.cat} · {g.variants} {ar ? "خيارات" : "variants"} · {g.listings} {ar ? "إدراج" : "listings"}
-                    </div>
-                  </td>
-                  <td className="px-4 py-2.5 font-mono text-xs text-slate-500">{g.unit}</td>
-                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono text-emerald-600">${g.lo.toFixed(2)}</td>
-                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono text-slate-600">${g.med.toFixed(2)}</td>
-                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono text-cedar">${g.hi.toFixed(2)}</td>
-                  <td className="px-4 py-2.5 text-right rtl:text-left font-mono font-semibold text-ink">+{g.spreadPct}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div className="mt-8 border-t border-slate-200" />
-    </div>
-  );
-}
-
-function ChainFlagCard({ ar, c, top }) {
-  const flagged = c.name === top.name;
+function ChainFlagCard({ ar, c, topName }) {
+  const flagged = c.name === topName;
+  const hasComparison = c.avgPremiumPct != null;
   return (
     <div className={`rounded-2xl border p-5 ${flagged ? "border-cedar/40 bg-cedar/5" : "border-slate-200 bg-white"}`}>
       <div className="flex items-center justify-between">
@@ -186,50 +61,151 @@ function ChainFlagCard({ ar, c, top }) {
           </span>
         )}
       </div>
-      <div className={`mt-2 text-2xl font-bold font-mono ${c.avgPremiumPct > 0 ? "text-cedar" : "text-ink"}`}>
-        {c.avgPremiumPct > 0 ? "+" : ""}{c.avgPremiumPct}%
+      {hasComparison ? (
+        <>
+          <div className={`mt-2 text-2xl font-bold font-mono ${c.avgPremiumPct > 0 ? "text-cedar" : "text-ink"}`}>
+            {c.avgPremiumPct > 0 ? "+" : ""}{c.avgPremiumPct}%
+          </div>
+          <div className="text-xs text-slate-500">{ar ? "علاوة وسطية لكل صنف مقابل المتوسط الهندسي" : "avg premium per item vs. geometric mean"}</div>
+          <div className="mt-2 text-xs text-slate-500">
+            {ar ? "الأغلى في" : "dearest on"} {c.dearestItems}/{c.itemsCompared} {ar ? "صنفاً" : "items"}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="mt-2 text-sm font-medium text-slate-400">
+            {ar ? "لا أصناف قابلة للمقارنة بعد" : "No comparable items yet"}
+          </div>
+          <div className="text-xs text-slate-400 mt-1">
+            {ar ? "لا يتقاطع مع المنفذين الآخرين على أي صنف من صنوف السلة حالياً" : "Doesn't currently overlap with the other chains on any basket item"}
+          </div>
+        </>
+      )}
+      <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 flex justify-between">
+        <span>{ar ? "أصناف مرصودة" : "items tracked"}</span>
+        <span className="font-mono text-ink">{c.items}</span>
       </div>
-      <div className="text-xs text-slate-500">{ar ? "علاوة وسطية لكل وحدة مقابل الأرخص" : "avg per-unit premium vs cheapest"}</div>
-      <div className="mt-2 text-xs text-slate-500">
-        {ar ? "الأغلى في" : "dearest on"} {c.dearestItems}/{c.itemsCompared} {ar ? "صنفاً (لكل وحدة)" : "items (per unit)"}
+      <div className="text-xs text-slate-500 flex justify-between mt-1">
+        <span>{ar ? "السعر الوسيط" : "median price"}</span>
+        <span className="font-mono text-ink">${c.medianPrice?.toFixed(2)}</span>
+      </div>
+      <div className="text-xs text-slate-500 flex justify-between mt-1">
+        <span>{ar ? "نسبة التوفر" : "in stock"}</span>
+        <span className="font-mono text-ink">{c.inStockRate}%</span>
       </div>
     </div>
   );
 }
 
-function FlagTable({ ar, title, sub, cols, rows }) {
+function AllCategoriesTable({ ar, rows }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
       <div className="px-5 py-4 border-b border-slate-100">
-        <h3 className="font-semibold text-ink">{title}</h3>
-        <p className="text-xs text-slate-500 mt-0.5">{sub}</p>
+        <h3 className="font-semibold text-ink">{ar ? "كل الفئات" : "All Categories"}</h3>
+        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+          {ar
+            ? "متوسط مرجّح لفجوات الأصناف (الوزن = وزن السلعة في مؤشر أسعار المستهلك) · الفئات المعلَّمة تستحق مراجعة"
+            : "Weighted average of item gaps (weight = each item's CPI importance weight) · flagged categories are worth reviewing"}
+        </p>
       </div>
-      <div className="overflow-x-auto scroll-thin">
-        <table className="w-full text-sm">
-          <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60">
-            <tr>
-              <th className="px-4 py-3 font-medium">{cols[0]}</th>
-              <th className="px-4 py-3 font-medium">{cols[1]}</th>
-              <th className="px-4 py-3 font-medium text-right rtl:text-left">{cols[2]}</th>
-              <th className="px-4 py-3 font-medium text-right rtl:text-left">{cols[3]}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">{rows}</tbody>
-        </table>
+      <div className="divide-y divide-slate-100">
+        {rows.map((c) => (
+          <div key={c.category} className={`px-5 py-4 flex flex-wrap items-center gap-x-6 gap-y-2 ${c.insufficientData ? "opacity-60" : ""}`}>
+            {/* Category name + item count — its own line, wraps freely */}
+            <div className="min-w-[220px] flex-1 basis-64">
+              <div className="font-medium text-ink leading-snug">{c.category}</div>
+              <div className="text-xs text-slate-400 mt-0.5">{c.nItems} {ar ? "صنف مقارَن" : c.nItems === 1 ? "item compared" : "items compared"}</div>
+            </div>
+
+            {/* Dearest -> cheapest, compact, own line on narrow screens */}
+            <div className="text-sm min-w-[180px]">
+              {c.dearest ? (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-medium text-cedar">{c.dearest}</span>
+                  <span className="text-slate-300">{ar ? "←" : "→"}</span>
+                  <span className="text-emerald-600">{c.cheapest}</span>
+                </div>
+              ) : (
+                <span className="text-slate-300">—</span>
+              )}
+            </div>
+
+            {/* Gap */}
+            <div className="w-20 text-right rtl:text-left font-mono font-semibold text-ink shrink-0">
+              {c.gapPct != null ? `+${c.gapPct}%` : <span className="text-slate-300 font-normal">—</span>}
+            </div>
+
+            {/* Status badge — fixed min-width so badges line up instead of ragging */}
+            <div className="shrink-0 min-w-[124px] text-right rtl:text-left">
+              {c.insufficientData ? (
+                <span className="inline-block text-[10px] uppercase tracking-wide font-mono text-slate-400 border border-slate-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+                  {ar ? "بيانات غير كافية" : "insufficient data"}
+                </span>
+              ) : c.needsReview ? (
+                <span className="inline-block text-[10px] uppercase tracking-wide font-mono text-cedar border border-cedar/40 rounded-full px-2 py-0.5 whitespace-nowrap">
+                  {ar ? "تحتاج مراجعة" : "needs review"}
+                </span>
+              ) : (
+                <span className="inline-block text-[10px] uppercase tracking-wide font-mono text-emerald-600 border border-emerald-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+                  {ar ? "ضمن الطبيعي" : "within normal range"}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
+// function FlagTable({ ar, title, sub, cols, rows }) {
+//   return (
+//     <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+//       <div className="px-5 py-4 border-b border-slate-100">
+//         <h3 className="font-semibold text-ink">{title}</h3>
+//         <p className="text-xs text-slate-500 mt-0.5">{sub}</p>
+//       </div>
+//       <div className="overflow-x-auto scroll-thin">
+//         <table className="w-full text-sm">
+//           <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60">
+//             <tr>
+//               <th className="px-4 py-3 font-medium">{cols[0]}</th>
+//               <th className="px-4 py-3 font-medium">{cols[1]}</th>
+//               <th className="px-4 py-3 font-medium text-right rtl:text-left">{cols[2]}</th>
+//               <th className="px-4 py-3 font-medium text-right rtl:text-left">{cols[3]}</th>
+//             </tr>
+//           </thead>
+//           <tbody className="divide-y divide-slate-100">{rows}</tbody>
+//         </table>
+//       </div>
+//     </div>
+//   );
+// }
+
 function InspectionWatch({ ar, data }) {
-  const { asOf, chainDates, comparedItems, chains, categories, items } = data;
+  const { chains, categoryGaps, items, comparedItems, usingEqualWeights, chainDates, activeChains, partialCoverageProducts } = data;
   if (!chains || chains.length === 0) return null;
-  const top = chains[0];
-  const cat0 = categories[0];
+  const nActive = activeChains?.length || chains.length;
+  const activeChainsLabel = (activeChains || chains.map((c) => c.name)).join(ar ? "، " : ", ");
+
+  const ranked = [...chains].filter((c) => c.avgPremiumPct != null).sort((a, b) => b.avgPremiumPct - a.avgPremiumPct);
+  const top = ranked[0] || null;
+  const topCat = categoryGaps.find((c) => !c.insufficientData) || null;
   const it0 = items[0];
-  const advice = ar
-    ? `على أساسٍ موحّد لكل وحدة (دون خلط أحجام مختلفة)، ${top.name} هي الأغلى — علاوة وسطية +${top.avgPremiumPct}% لكل وحدة فوق أرخص منافس، والأعلى في ${top.dearestItems} من ${top.itemsCompared} صنفاً. أولوية للمراجعة: ${cat0?.category} (الأغلى ${cat0?.dearest} مقابل ${cat0?.cheapest}، فجوة وسطية +${cat0?.gap}% لكل وحدة)${it0 ? `، وحالات شاذّة مثل ${it0.item} (+${it0.gap}% لكل ${it0.unit} لدى ${it0.dearCh})` : ""}. التوصية: نشر أسعار مرجعية لكل وحدة للأصناف الأوسع فجوةً، وتفتيش مستهدف حيث يرتفع منفذ واحد كثيراً فوق أقرانه — الشفافية والمراجعة المستهدفة بدل سقوف الأسعار.`
-    : `On a common per-unit basis (no mixing pack sizes), ${top.name} is the dearest — an average +${top.avgPremiumPct}% per unit above the cheapest peer, and dearest on ${top.dearestItems} of ${top.itemsCompared} items. Priority for review: ${cat0?.category} (dearest ${cat0?.dearest} vs ${cat0?.cheapest}, median +${cat0?.gap}% per unit)${it0 ? `, and outliers such as ${it0.item} (+${it0.gap}% per ${it0.unit} at ${it0.dearCh})` : ""}. Recommendation: publish per-unit reference prices for the widest-gap items and prioritise targeted inspection where a single chain sits far above peers — transparency and targeted review over blanket price caps.`;
+
+  const advice = !top
+    ? (ar
+        ? `لا توجد بعد أصناف قابلة للمقارنة عبر المنافذ النشطة معاً (${activeChainsLabel}) — التوصيات أدناه ستُستكمل حال توسّع تقاطع السلة.`
+        : `No items are yet comparable across the active chains together (${activeChainsLabel}) — recommendations below will fill in as basket overlap grows.`)
+    : ar
+    ? `بمقارنة كل صنف موجود لدى المنافذ النشطة معاً (${activeChainsLabel}) على وحدته الفعلية، ${top.name} هي الأغلى — علاوة وسطية +${top.avgPremiumPct}% فوق المتوسط الهندسي، والأعلى في ${top.dearestItems} من ${top.itemsCompared} صنفاً. أولوية للمراجعة: ${topCat?.category} (الأغلى ${topCat?.dearest} مقابل ${topCat?.cheapest}، فجوة مرجّحة +${topCat?.gapPct}%)${it0 ? `، وحالات شاذّة مثل ${it0.item} (+${it0.gap}% لكل ${it0.unit} لدى ${it0.dearCh})` : ""}. التوصية: نشر أسعار مرجعية للأصناف الأوسع فجوةً، وتفتيش مستهدف حيث يرتفع منفذ واحد كثيراً — الشفافية والمراجعة المستهدفة بدل سقوف الأسعار.${usingEqualWeights ? " ملاحظة: الفجوات على مستوى الفئة أعلاه غير مرجّحة حالياً (أوزان متساوية) لحين ربط أوزان مؤشر أسعار المستهلك الفعلية." : ""}`
+    : `Comparing every item present at the active chains together (${activeChainsLabel}) on its actual pack unit, ${top.name} is the dearest — an average +${top.avgPremiumPct}% above the geometric-mean price, and dearest on ${top.dearestItems} of ${top.itemsCompared} items. Priority for review: ${topCat?.category} (dearest ${topCat?.dearest} vs ${topCat?.cheapest}, weighted +${topCat?.gapPct}%)${it0 ? `, and outliers such as ${it0.item} (+${it0.gap}% per ${it0.unit} at ${it0.dearCh})` : ""}. Recommendation: publish reference prices for the widest-gap items and prioritise targeted inspection where a single chain sits far above peers — transparency and targeted review over blanket price caps.${usingEqualWeights ? " Note: the category-level gaps above are currently UNWEIGHTED (equal weights) pending the live CPI item-weight connection." : ""}`;
+
+  const dateNote = chainDates && Object.values(chainDates).some((d, _, arr) => d !== arr[0])
+    ? (ar
+        ? `المنافذ مسحت في تواريخ مختلفة (${Object.entries(chainDates).map(([c, d]) => `${c} ${d}`).join("، ")}) — هذه مقارنة عبر لحظات مختلفة، وليست مقارنة ليوم واحد.`
+        : `Chains were scraped on different dates (${Object.entries(chainDates).map(([c, d]) => `${c} ${d}`).join(", ")}) — this is a cross-sectional comparison, not a same-day one.`)
+    : null;
 
   return (
     <div className="max-w-7xl mx-auto w-full px-5 pt-8">
@@ -237,9 +213,15 @@ function InspectionWatch({ ar, data }) {
       <h2 className="mt-2 text-2xl sm:text-3xl font-semibold font-display text-ink">
         {ar ? "رصد التفتيش — منافذ وأصناف تستحقّ تدقيقاً" : "Inspection Watch — chains & items worth a closer look"}
       </h2>
+      <p className="mt-1 text-xs text-slate-500">
+        {ar
+          ? `${comparedItems} صنفاً قابلاً للمقارنة عبر المنافذ النشطة (${activeChainsLabel})`
+          : `${comparedItems} items comparable across the active chains (${activeChainsLabel})`}
+        {dateNote ? ` · ${dateNote}` : ""}
+      </p>
 
       <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {chains.map((c) => <ChainFlagCard key={c.name} ar={ar} c={c} top={top} />)}
+        {chains.map((c) => <ChainFlagCard key={c.name} ar={ar} c={c} topName={top?.name} />)}
       </div>
 
       <div className="mt-4 rounded-2xl border border-cedar/30 bg-white px-5 py-4">
@@ -247,37 +229,139 @@ function InspectionWatch({ ar, data }) {
         <p className="text-sm sm:text-[15px] text-ink leading-relaxed">{advice}</p>
       </div>
 
-      <div className="mt-5 grid lg:grid-cols-2 gap-5">
-        <FlagTable
-          ar={ar}
-          title={ar ? "فئات للمراجعة" : "Categories to review"}
-          sub={ar ? "فجوة وسطية لكل وحدة · المنفذ الأغلى بحسب عدد الأصناف" : "Median per-unit gap · dearest chain by item wins"}
-          cols={[ar ? "الفئة" : "Category", ar ? "الأغلى" : "Dearest", ar ? "الأرخص" : "Cheapest", ar ? "الفجوة" : "Gap"]}
-          rows={categories.map((c) => (
-            <tr key={c.category} className="hover:bg-slate-50 transition-colors">
-              <td className="px-4 py-2.5 text-ink">{c.category} <span className="text-xs text-slate-400">· {c.nItems} {ar ? "صنف" : "items"}</span></td>
-              <td className="px-4 py-2.5"><span className="font-medium text-cedar">{c.dearest}</span></td>
-              <td className="px-4 py-2.5 text-right rtl:text-left"><span className="text-emerald-600">{c.cheapest}</span></td>
-              <td className="px-4 py-2.5 text-right rtl:text-left font-mono font-semibold text-ink">+{c.gap}%</td>
-            </tr>
-          ))}
-        />
+      <div className="mt-5">
+        <AllCategoriesTable ar={ar} rows={categoryGaps} />
+      </div>
+
+      {/* <div className="mt-5">
         <FlagTable
           ar={ar}
           title={ar ? "أصناف شاذّة للتفتيش" : "Outlier items to inspect"}
-          sub={ar ? "نفس الصنف · موحّد لكل وحدة · أغلى مقابل أرخص منفذ" : "Same item · per common unit · dearest vs cheapest chain"}
+          sub={ar ? "نفس الصنف · موحّد على وحدته الفعلية · أغلى مقابل المتوسط الهندسي" : "Same item · standardized to its actual pack unit · dearest vs. geometric mean"}
           cols={[ar ? "الصنف" : "Item", ar ? "الأغلى" : "Dearest", ar ? "الأرخص" : "Cheapest", ar ? "الفجوة" : "Gap"]}
           rows={items.map((r) => (
             <tr key={r.item} className="hover:bg-slate-50 transition-colors">
-              <td className="px-4 py-2.5"><div className="text-ink">{r.item}</div><div className="text-xs text-slate-400">{r.category} · {ar ? "لكل" : "per"} {r.unit}{r.nChains < 3 ? ` · ${r.nChains}/3` : ""}</div></td>
+              <td className="px-4 py-2.5">
+                <div className="text-ink">{r.item}</div>
+                <div className="text-xs text-slate-400">
+                  {r.category} · {ar ? "لكل" : "per"} {r.unit}
+                  {r.nChains < nActive ? ` · ${r.nChains}/${nActive} ${ar ? "منافذ" : "chains"}` : ""}
+                  {r.nProducts ? ` · ${r.nProducts} ${ar ? (r.nProducts === 1 ? "منتج مطابق" : "منتجات مطابقة") : r.nProducts === 1 ? "matched product" : "matched products"}` : ""}
+                </div>
+                {r.products?.length > 0 && (
+                  <div className="text-[11px] text-slate-400 mt-0.5 truncate max-w-md" title={r.products.join(", ")}>
+                    {ar ? "المنتجات: " : "Products: "}{r.products.join(", ")}
+                  </div>
+                )}
+              </td>
               <td className="px-4 py-2.5"><span className="font-medium text-cedar">{r.dearCh}</span> <span className="font-mono text-xs text-slate-500">${r.dearP}</span></td>
               <td className="px-4 py-2.5 text-right rtl:text-left"><span className="text-emerald-600">{r.cheapCh}</span> <span className="font-mono text-xs text-slate-500">${r.cheapP}</span></td>
               <td className="px-4 py-2.5 text-right rtl:text-left font-mono font-semibold text-ink">+{r.gap}%</td>
             </tr>
           ))}
         />
+      </div> */}
+
+      {partialCoverageProducts?.length > 0 && (
+        <div className="mt-5 rounded-2xl border border-amber-300/60 bg-amber-50/40 overflow-hidden">
+          <div className="px-5 py-4 border-b border-amber-200/60">
+            <h3 className="font-semibold text-ink">
+              {ar ? "منتجات بتغطية جزئية" : "Partial-coverage products"}
+            </h3>
+            <p className="text-xs text-slate-600 mt-0.5">
+              {ar
+                ? `موجودة في منفذين أو أكثر لكن ليس كل المنافذ النشطة (${activeChainsLabel}) — الفجوة معروضة للشفافية فقط، وغير مُدرجة في إجماليات الصنف أو الفئة.`
+                : `Found in 2+ chains but not all active chains (${activeChainsLabel}) — gap shown for transparency only, excluded from item/category totals.`}
+            </p>
+          </div>
+          <div className="overflow-x-auto scroll-thin">
+            <table className="w-full text-sm">
+              <thead className="text-left rtl:text-right text-slate-500 bg-amber-50/60">
+                <tr>
+                  <th className="px-4 py-3 font-medium">{ar ? "المنتج" : "Product"}</th>
+                  <th className="px-4 py-3 font-medium">{ar ? "المقارنة بين" : "Compared across"}</th>
+                  <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الفجوة" : "Gap"}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-amber-100">
+                {partialCoverageProducts.map((p) => (
+                  <tr key={`${p.code}-${p.productName}`}>
+                    <td className="px-4 py-2.5">
+                      <div className="text-ink">{p.productName}</div>
+                      <div className="text-xs text-slate-400">{p.cpi_item} · {p.category} · {ar ? "لكل" : "per"} {p.unit}</div>
+                    </td>
+                    <td className="px-4 py-2.5 text-xs text-slate-600">{p.chainsCompared.join(", ")}</td>
+                    <td className="px-4 py-2.5 text-right rtl:text-left font-mono font-semibold text-ink">+{p.gapPct}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-8 border-t border-slate-200" />
+    </div>
+  );
+}
+
+function PriceDispersionSection({ ar, data }) {
+  const { top, comparedItems } = data;
+  if (!top || top.length === 0) return null;
+  return (
+    <div className="max-w-7xl mx-auto w-full px-5 pt-8">
+      <span className="eyebrow">{ar ? "المشكلة بالأرقام" : "The problem, quantified"}</span>
+      <h2 className="mt-2 text-2xl sm:text-3xl font-semibold font-display text-ink">
+        {ar ? "المنتج نفسه… بسعرٍ مختلف" : "The same product, a different price"}
+      </h2>
+      <p className="mt-2 text-slate-600 max-w-3xl leading-relaxed">
+        {ar
+          ? `أوسع 10 فجوات بين أرخص وأغلى منفذ لنفس الصنف، من أصل ${comparedItems.toLocaleString()} صنفاً قابلاً للمقارنة عبر المنافذ الثلاثة (المصدر: سلّة أسعار المتاجر المسمّاة، لا كتالوج السوق الحيّ). أسماء المنافذ ظاهرة بالكامل — لا حجب.`
+          : `The widest 10 gaps between the cheapest and dearest chain for the same item, out of ${comparedItems.toLocaleString()} items comparable across all 3 chains (source: the named-chain basket, not the live market catalogue). Chain names are shown in full — nothing withheld.`}
+      </p>
+
+      <div className="mt-5 rounded-2xl border border-slate-200 bg-white overflow-hidden p-4">
+        <PriceDispersionRangeChart rows={top} height={Math.max(280, top.length * 42)} />
       </div>
 
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <div className="overflow-x-auto scroll-thin">
+          <table className="w-full text-sm">
+            <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60">
+              <tr>
+                <th className="px-4 py-3 font-medium">{ar ? "الصنف" : "Item"}</th>
+                {[...new Set(top.flatMap((r) => Object.keys(r.byChain)))].sort().map((ch) => (
+                  <th key={ch} className="px-4 py-3 font-medium text-right rtl:text-left">{ch}</th>
+                ))}
+                <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الفجوة" : "Gap"}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {top.map((r) => {
+                const allChains = [...new Set(top.flatMap((x) => Object.keys(x.byChain)))].sort();
+                return (
+                  <tr key={r.item} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-2.5">
+                      <div className="font-medium text-ink">{r.item}</div>
+                      <div className="text-xs text-slate-500">{r.category} · {ar ? "لكل" : "per"} {r.unit}</div>
+                    </td>
+                    {allChains.map((ch) => {
+                      const price = r.byChain[ch];
+                      const isDear = ch === r.dearChain, isCheap = ch === r.cheapChain;
+                      return (
+                        <td key={ch} className={`px-4 py-2.5 text-right rtl:text-left font-mono ${isDear ? "text-cedar font-semibold" : isCheap ? "text-emerald-600" : "text-slate-400"}`}>
+                          {price != null ? `$${price}` : "—"}
+                        </td>
+                      );
+                    })}
+                    <td className="px-4 py-2.5 text-right rtl:text-left font-mono font-semibold text-ink">+{r.gapPct}%</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
       <div className="mt-8 border-t border-slate-200" />
     </div>
   );
@@ -286,22 +370,36 @@ function InspectionWatch({ ar, data }) {
 export default async function ProductsPage({ searchParams }) {
   const sp = await searchParams;
   const initialId = typeof sp?.p === "string" ? sp.p : null;
-  const [locale, categories, meta, dispersion, unitWatch] = await Promise.all([
-    getLocale(),
-    getCategories(),
-    getCatalogueMeta(),
-    getPriceDispersion({ topN: 10 }),
-    getUnitPriceWatch({ topN: 10 }),
-  ]);
+
+  let locale, categories, retailers, meta, forensic, basketDispersion, dispStats;
+  try {
+    [locale, categories, retailers, meta] = await Promise.all([
+      getLocale(),
+      getCategories(),
+      getRetailers(),
+      getCatalogueMeta(),
+    ]);
+  } catch (err) {
+    console.error("[app/products/page] failed to load live catalogue data:", err);
+    throw err; // let the route's error boundary handle it — no silent fallback
+  }
+
+  try {
+    forensic = getForensicWatch();
+    basketDispersion = getBasketPriceDispersion(10);
+    dispStats = getBasketDispersionStats();
+  } catch (err) {
+    console.error("[app/products/page] failed to load basket data:", err);
+    throw err;
+  }
+
   const ar = locale === "ar";
-  const forensic = getForensicWatch();
   return (
     <>
-      <TransparencyIntro ar={ar} meta={meta} dispersion={dispersion} />
+      <TransparencyIntro ar={ar} meta={meta} dispStats={dispStats} />
       <InspectionWatch ar={ar} data={forensic} />
-      <PriceDispersion ar={ar} data={dispersion} />
-      <UnitPriceWatch ar={ar} data={unitWatch} />
-      <ProductsExplorer categories={categories} meta={meta} initialId={initialId} locale={locale} />
+      <PriceDispersionSection ar={ar} data={basketDispersion} />
+      <ProductsExplorer categories={categories} retailers={retailers} meta={meta} initialId={initialId} locale={locale} />
     </>
   );
 }
