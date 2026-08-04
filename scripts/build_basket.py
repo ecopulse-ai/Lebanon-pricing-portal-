@@ -514,27 +514,48 @@ def resolve_ambiguous_qty(chain_rows):
     any row with an ambiguous small bare number (base_qty=None, ambigQty set)
     gets resolved IF the cluster has a confident family from at least one
     OTHER row with an explicit unit (mass or vol; count isn't in scope -- a
-    bare small count is not the same ambiguity). Resolution treats the bare
-    number as the "large" unit (kg for mass, L for vol) rather than the base
-    unit (g/ml) -- e.g. a bare "3" alongside explicit-litre siblings becomes
-    3000 (ml), not 3 -- since a bare number this small basically never means
-    3g/3ml of a real product, but very plausibly means 3kg/3L. Mutates rows
-    in place (base_qty/family) for any row it resolves; does nothing if no
-    confident family is available (row stays unusable, as before)."""
-    confident = Counter(
-        r["family"] for rows in chain_rows.values() for r in rows
-        if r.get("family") in ("mass", "vol")
-    )
-    if not confident:
+    bare small count is not the same ambiguity).
+
+    Two candidate interpretations are considered for the bare number: as-is
+    (e.g. "19" -> 19g) or as the "large" unit (e.g. "19" -> 19kg = 19000g).
+    Whichever is CLOSER in magnitude to the real sibling evidence in this
+    same cluster wins -- this is not a blanket assumption either way.
+    Confirmed necessary on real data: a first version of this function always
+    assumed the large-unit reading (right for a Spinneys "3" meaning 3 litres
+    of oil, alongside explicit-litre siblings), but that same rule silently
+    turned a Spinneys "19" (meaning a 19g instant-coffee sachet, alongside a
+    Carrefour sibling explicitly saying "19.3G") into 19,000g -- producing a
+    67,600% gap on an item that should have been a normal few-percent
+    difference. Picking whichever candidate is numerically closest to real
+    sibling values avoids both failure modes with the same logic.
+
+    Mutates rows in place (base_qty/family) for any row it resolves; does
+    nothing if no confident family is available (row stays unusable)."""
+    sibling_qtys_by_family = defaultdict(list)
+    for rows in chain_rows.values():
+        for r in rows:
+            if r.get("family") in ("mass", "vol") and r.get("base_qty"):
+                sibling_qtys_by_family[r["family"]].append(r["base_qty"])
+    if not sibling_qtys_by_family:
         return
-    fam = confident.most_common(1)[0][0]
+    fam = max(sibling_qtys_by_family, key=lambda f: len(sibling_qtys_by_family[f]))
+    siblings = sibling_qtys_by_family[fam]
+
+    def closest_ratio(candidate):
+        return min(max(candidate, s) / max(min(candidate, s), 1e-9) for s in siblings)
+
     resolved = 0
     for rows in chain_rows.values():
         for r in rows:
             if r.get("base_qty") is None and r.get("ambigQty") is not None:
-                r["base_qty"] = r["ambigQty"] * 1000
+                as_is = r["ambigQty"]
+                as_large_unit = r["ambigQty"] * 1000
+                chosen = as_is if closest_ratio(as_is) <= closest_ratio(as_large_unit) else as_large_unit
+                r["base_qty"] = chosen
                 r["family"] = fam
                 resolved += 1
+                log(f"    resolved ambiguous size {r['ambigQty']!r} -> {chosen} {fam} "
+                    f"(chose {'as-is' if chosen == as_is else 'x1000'}, nearest sibling(s): {siblings})")
     if resolved:
         log(f"    resolved {resolved} ambiguous bare-number size(s) as '{fam}' from sibling context")
 

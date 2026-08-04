@@ -147,10 +147,9 @@ function AllCategoriesTable({ ar, rows }) {
       <div className="divide-y divide-slate-100">
         {rows.map((c) => (
           <div key={c.category} className="px-5 py-4 flex flex-wrap items-center gap-x-6 gap-y-2">
-            {/* Category name + item count — its own line, wraps freely */}
+            {/* Category name — its own line, wraps freely */}
             <div className="min-w-[220px] flex-1 basis-64">
               <div className="font-medium text-ink leading-snug">{c.category}</div>
-              <div className="text-xs text-slate-400 mt-0.5">{c.nItems} {ar ? "صنف مقارَن" : c.nItems === 1 ? "item compared" : "items compared"}</div>
             </div>
 
             {/* Dearest -> cheapest, compact, own line on narrow screens */}
