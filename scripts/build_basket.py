@@ -954,10 +954,67 @@ for code, rs in item_groups.items():
             # even when the OTHER chain's row in the SAME item has an
             # explicit unit to infer from.
             resolve_ambiguous_qty(candidate)
-            chain_rows = candidate
-            ref_qty, family = cat_entry["refQty"], cat_entry["family"]
-            match_source = "catalog"
-            catalog_matched_codes += 1
+
+            # Plausibility check on the catalog's own Base Unit: confirmed on
+            # real data that this file has at least one data-entry error --
+            # "cashew" (11657) lists a Base Unit of "500 kg" while its real
+            # matched products are 30GR/15GR packs, a >10,000x mismatch, which
+            # produced a nonsensical $14,166-per-"unit" price. Rather than
+            # trust the catalog's stated unit blindly, compare it against the
+            # real parsed sizes of the actual matched rows; if it's wildly
+            # off (here: >20x in either direction), the catalog's PRODUCT
+            # MATCH is still used (that part is reliable), but the SIZE falls
+            # back to being resolved from real evidence, same as an item with
+            # no catalog Base Unit at all.
+            real_qtys = [r["base_qty"] for rows_ in candidate.values() for r in rows_ if r.get("base_qty")]
+            real_fams = Counter(r["family"] for rows_ in candidate.values() for r in rows_ if r.get("family"))
+            implausible = False
+            if real_qtys and cat_entry["family"] in ("mass", "vol"):
+                # Only meaningful within the SAME family -- a count-based Base
+                # Unit ("1 pack", "1 bar", "7 loaves") compared numerically
+                # against real MASS sizes (grams) is comparing different
+                # kinds of quantity, not a data error, so it's excluded here
+                # entirely (confirmed: "1 pack" vs real 82.5g biscuits and
+                # "7 loaves" vs real 825g bread both flagged as false
+                # positives under a same-number check before this fix).
+                # Threshold set well above a legitimate small-packet-to-kg/L
+                # scaling factor -- confirmed elsewhere in this same catalog
+                # that ~50x (a 20g cardamom packet standardized to a 1kg
+                # reference) is a normal, intended design, not an error; the
+                # genuine case this guard exists for ("cashew": 500,000g
+                # Base Unit vs ~50g real packs) is off by ~9,500x, nowhere
+                # near this line.
+                same_fam_qtys = [q for q, r in zip(real_qtys, [r for rows_ in candidate.values() for r in rows_ if r.get("base_qty")]) if r.get("family") == cat_entry["family"]]
+                if same_fam_qtys:
+                    med_real = statistics.median(same_fam_qtys)
+                    if med_real > 0 and not (1/200 <= cat_entry["refQty"] / med_real <= 200):
+                        implausible = True
+                        log_warn(f"item '{item_label}' ({code}): catalog Base Unit "
+                                  f"'{cat_entry['baseUnitRaw']}' ({cat_entry['refQty']}) is implausible next to "
+                                  f"the real matched products' sizes (median {med_real}, same family) -- likely "
+                                  f"a data-entry error in the catalog spreadsheet. Using the products (still "
+                                  f"trustworthy) but resolving size from real evidence instead of the stated "
+                                  f"Base Unit.")
+
+            if not implausible:
+                chain_rows = candidate
+                ref_qty, family = cat_entry["refQty"], cat_entry["family"]
+                match_source = "catalog"
+                catalog_matched_codes += 1
+            else:
+                sizeable = {ch: [r for r in rows_ if r["base_qty"]] for ch, rows_ in candidate.items()}
+                if all(sizeable.get(ch) for ch in ACTIVE_CHAINS):
+                    rq, chains_for_size = resolve_reference_qty(sizeable)
+                    if rq is not None:
+                        sizeable = {ch: rs_ for ch, rs_ in sizeable.items() if ch in chains_for_size}
+                        if all(sizeable.get(ch) for ch in ACTIVE_CHAINS):
+                            chain_rows = sizeable
+                            ref_qty = rq
+                            all_rows = [r for rows_ in chain_rows.values() for r in rows_]
+                            fam_counts = Counter(r["family"] for r in all_rows if r["family"])
+                            family = fam_counts.most_common(1)[0][0] if fam_counts else None
+                            match_source = "catalog"
+                            catalog_matched_codes += 1
 
     # ── FALLBACK: name-similarity clustering + the tolerance-based size
     # resolution from before, only reached when the catalog doesn't cover
