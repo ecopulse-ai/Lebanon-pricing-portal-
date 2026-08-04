@@ -1,7 +1,7 @@
 import ProductsExplorer from "@/components/ProductsExplorer";
 import { PriceDispersionRangeChart } from "@/components/Charts";
 import { getCategories, getCatalogueMeta, getRetailers } from "@/lib/products";
-import { getForensicWatch, getBasketPriceDispersion, getBasketDispersionStats } from "@/lib/basketData";
+import { getForensicWatch, getBasketProductDispersion, getBasketDispersionStats } from "@/lib/basketData";
 import { getLocale } from "@/lib/locale-server";
 
 // Without this, Next.js's default static-optimization tries to prerender
@@ -28,11 +28,12 @@ function Stat({ big, label, tone = "brand" }) {
   );
 }
 
-function TransparencyIntro({ ar, meta, dispStats }) {
+function TransparencyIntro({ ar, meta, dispStats, activeChains }) {
   const products = (meta?.products || 0).toLocaleString("en-US");
   const listings = (meta?.listings || 0).toLocaleString("en-US");
   const medSpread = dispStats?.medianGapPct ?? 0;
   const share25 = dispStats?.shareOver25Pct ?? 0;
+  const chainsLabel = (activeChains || []).join(ar ? "، " : ", ");
   return (
     <div className="max-w-7xl mx-auto w-full px-5 pt-8">
       <span className="eyebrow">{ar ? "الأداة الرابعة · شفافية الأسعار" : "Instrument IV · Price Transparency"}</span>
@@ -41,15 +42,15 @@ function TransparencyIntro({ ar, meta, dispStats }) {
       </h1>
       <p className="mt-3 text-lg sm:text-xl font-semibold text-brand-700 max-w-3xl leading-snug">
         {ar
-          ? `على العيّنة القابلة للمقارنة عبر المنافذ الثلاثة، السلعة نفسها قد تكلّف أكثر بنسبة ${medSpread}% تبعاً لمكان الشراء — و${share25}% من الأصناف تتفاوت بأكثر من الربع مقابل المتوسط الهندسي. نشر الأسعار يُغلق هذه الفجوة.`
-          : `Across the items comparable at all three chains, the same product can cost ${medSpread}% more depending on where you shop — and ${share25}% of items vary by over a quarter against the geometric-mean price. Publishing prices closes that gap.`}
+          ? `على العيّنة القابلة للمقارنة عبر ${chainsLabel}، السلعة نفسها قد تكلّف أكثر بنسبة ${medSpread}% تبعاً لمكان الشراء — و${share25}% من الأصناف تتفاوت بأكثر من الربع بين المنفذين. نشر الأسعار يُغلق هذه الفجوة.`
+          : `Across the items comparable at ${chainsLabel}, the same product can cost ${medSpread}% more depending on where you shop — and ${share25}% of items vary by over a quarter between the chains. Publishing prices closes that gap.`}
       </p>
 
       <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Stat big={products} label={ar ? "منتج تُرصد أسعاره يومياً (كتالوج السوق الحيّ)" : "products priced every day (live market catalogue)"} />
         <Stat big={listings} label={ar ? "نقطة سعرٍ تُستوعب يومياً" : "shelf price points ingested daily"} />
-        <Stat big={`${medSpread}%`} tone="cedar" label={ar ? "فجوة وسيطة عبر السلة المقارنة (مقابل المتوسط الهندسي)" : "median gap across the comparable basket (vs. geometric mean)"} />
-        <Stat big={`${share25}%`} tone="cedar" label={ar ? "من الأصناف تتفاوت بأكثر من 25%" : "of items vary >25% vs. geometric mean"} />
+        <Stat big={`${medSpread}%`} tone="cedar" label={ar ? "فجوة وسيطة عبر السلة المقارنة" : "median gap across the comparable basket"} />
+        <Stat big={`${share25}%`} tone="cedar" label={ar ? "من الأصناف تتفاوت بأكثر من 25%" : "of items vary by more than 25%"} />
       </div>
 
       <div className="mt-8 border-t border-slate-200" />
@@ -145,7 +146,7 @@ function AllCategoriesTable({ ar, rows }) {
       </div>
       <div className="divide-y divide-slate-100">
         {rows.map((c) => (
-          <div key={c.category} className={`px-5 py-4 flex flex-wrap items-center gap-x-6 gap-y-2 ${c.insufficientData ? "opacity-60" : ""}`}>
+          <div key={c.category} className="px-5 py-4 flex flex-wrap items-center gap-x-6 gap-y-2">
             {/* Category name + item count — its own line, wraps freely */}
             <div className="min-w-[220px] flex-1 basis-64">
               <div className="font-medium text-ink leading-snug">{c.category}</div>
@@ -154,29 +155,21 @@ function AllCategoriesTable({ ar, rows }) {
 
             {/* Dearest -> cheapest, compact, own line on narrow screens */}
             <div className="text-sm min-w-[180px]">
-              {c.dearest ? (
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-medium text-cedar">{c.dearest}</span>
-                  <span className="text-slate-300">{ar ? "←" : "→"}</span>
-                  <span className="text-emerald-600">{c.cheapest}</span>
-                </div>
-              ) : (
-                <span className="text-slate-300">—</span>
-              )}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-medium text-cedar">{c.dearest}</span>
+                <span className="text-slate-300">{ar ? "←" : "→"}</span>
+                <span className="text-emerald-600">{c.cheapest}</span>
+              </div>
             </div>
 
             {/* Gap */}
             <div className="w-20 text-right rtl:text-left font-mono font-semibold text-ink shrink-0">
-              {c.gapPct != null ? `+${c.gapPct}%` : <span className="text-slate-300 font-normal">—</span>}
+              +{c.gapPct}%
             </div>
 
             {/* Status badge — fixed min-width so badges line up instead of ragging */}
             <div className="shrink-0 min-w-[124px] text-right rtl:text-left">
-              {c.insufficientData ? (
-                <span className="inline-block text-[10px] uppercase tracking-wide font-mono text-slate-400 border border-slate-200 rounded-full px-2 py-0.5 whitespace-nowrap">
-                  {ar ? "بيانات غير كافية" : "insufficient data"}
-                </span>
-              ) : c.needsReview ? (
+              {c.needsReview ? (
                 <span className="inline-block text-[10px] uppercase tracking-wide font-mono text-cedar border border-cedar/40 rounded-full px-2 py-0.5 whitespace-nowrap">
                   {ar ? "تحتاج مراجعة" : "needs review"}
                 </span>
@@ -218,7 +211,7 @@ function AllCategoriesTable({ ar, rows }) {
 // }
 
 function InspectionWatch({ ar, data, dispersion }) {
-  const { chains, categoryGaps, items, comparedItems, usingEqualWeights, chainDates, activeChains, partialCoverageProducts } = data;
+  const { chains, categoryGaps, items, comparedItems, usingEqualWeights, chainDates, activeChains } = data;
   if (!chains || chains.length === 0) return null;
   const nActive = activeChains?.length || chains.length;
   const activeChainsLabel = (activeChains || chains.map((c) => c.name)).join(ar ? "، " : ", ");
@@ -233,8 +226,8 @@ function InspectionWatch({ ar, data, dispersion }) {
         ? `لا توجد بعد أصناف قابلة للمقارنة عبر المنافذ النشطة معاً (${activeChainsLabel}) — التوصيات أدناه ستُستكمل حال توسّع تقاطع السلة.`
         : `No items are yet comparable across the active chains together (${activeChainsLabel}) — recommendations below will fill in as basket overlap grows.`)
     : ar
-    ? `بمقارنة كل صنف موجود لدى المنافذ النشطة معاً (${activeChainsLabel}) على وحدته الفعلية، ${top.name} هي الأغلى — علاوة وسطية +${top.avgPremiumPct}% فوق المتوسط الهندسي، والأعلى في ${top.dearestItems} من ${top.itemsCompared} صنفاً. أولوية للمراجعة: ${topCat?.category} (الأغلى ${topCat?.dearest} مقابل ${topCat?.cheapest}، فجوة مرجّحة +${topCat?.gapPct}%)${it0 ? `، وحالات شاذّة مثل ${it0.item} (+${it0.gap}% لكل ${it0.unit} لدى ${it0.dearCh})` : ""}. التوصية: نشر أسعار مرجعية للأصناف الأوسع فجوةً، وتفتيش مستهدف حيث يرتفع منفذ واحد كثيراً — الشفافية والمراجعة المستهدفة بدل سقوف الأسعار.${usingEqualWeights ? " ملاحظة: الفجوات على مستوى الفئة أعلاه غير مرجّحة حالياً (أوزان متساوية) لحين توفّر أوزان كتالوج المنتجات (data/item_product_catalog.json)." : ""}`
-    : `Comparing every item present at the active chains together (${activeChainsLabel}) on its actual pack unit, ${top.name} is the dearest — an average +${top.avgPremiumPct}% above the geometric-mean price, and dearest on ${top.dearestItems} of ${top.itemsCompared} items. Priority for review: ${topCat?.category} (dearest ${topCat?.dearest} vs ${topCat?.cheapest}, weighted +${topCat?.gapPct}%)${it0 ? `, and outliers such as ${it0.item} (+${it0.gap}% per ${it0.unit} at ${it0.dearCh})` : ""}. Recommendation: publish reference prices for the widest-gap items and prioritise targeted inspection where a single chain sits far above peers — transparency and targeted review over blanket price caps.${usingEqualWeights ? " Note: the category-level gaps above are currently UNWEIGHTED (equal weights) pending the item catalog weights being available (data/item_product_catalog.json)." : ""}`;
+    ? `بمقارنة كل صنف موجود لدى المنافذ النشطة معاً (${activeChainsLabel}) على وحدته الفعلية، ${top.name} هي الأغلى — علاوة وسطية +${top.avgPremiumPct}% فوق أسعار المنافذ الأخرى، والأعلى في ${top.dearestItems} من ${top.itemsCompared} صنفاً. أولوية للمراجعة: ${topCat?.category} (الأغلى ${topCat?.dearest} مقابل ${topCat?.cheapest}، فجوة مرجّحة +${topCat?.gapPct}%)${it0 ? `، وحالات شاذّة مثل ${it0.item} (+${it0.gap}% لكل ${it0.unit} لدى ${it0.dearCh})` : ""}. التوصية: نشر أسعار مرجعية للأصناف الأوسع فجوةً، وتفتيش مستهدف حيث يرتفع منفذ واحد كثيراً — الشفافية والمراجعة المستهدفة بدل سقوف الأسعار.${usingEqualWeights ? " ملاحظة: الفجوات على مستوى الفئة أعلاه غير مرجّحة حالياً (أوزان متساوية) لحين توفّر أوزان كتالوج المنتجات (data/item_product_catalog.json)." : ""}`
+    : `Comparing every item present at the active chains together (${activeChainsLabel}) on its actual pack unit, ${top.name} is the dearest — an average +${top.avgPremiumPct}% above prices at the other chain, and dearest on ${top.dearestItems} of ${top.itemsCompared} items. Priority for review: ${topCat?.category} (dearest ${topCat?.dearest} vs ${topCat?.cheapest}, weighted +${topCat?.gapPct}%)${it0 ? `, and outliers such as ${it0.item} (+${it0.gap}% per ${it0.unit} at ${it0.dearCh})` : ""}. Recommendation: publish reference prices for the widest-gap items and prioritise targeted inspection where a single chain sits far above peers — transparency and targeted review over blanket price caps.${usingEqualWeights ? " Note: the category-level gaps above are currently UNWEIGHTED (equal weights) pending the item catalog weights being available (data/item_product_catalog.json)." : ""}`;
 
   const dateNote = chainDates && Object.values(chainDates).some((d, _, arr) => d !== arr[0])
     ? (ar
@@ -267,41 +260,40 @@ function InspectionWatch({ ar, data, dispersion }) {
       <div className="mt-5 grid lg:grid-cols-2 gap-5 items-start">
         <AllCategoriesTable ar={ar} rows={categoryGaps} />
 
-        {dispersion?.top?.length > 0 && (
+        {items?.length > 0 && (
           <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100">
-              <h3 className="font-semibold text-ink">{ar ? "فجوات المنتجات" : "Product gaps"}</h3>
+              <h3 className="font-semibold text-ink">{ar ? "فجوات الأصناف" : "Item gaps"}</h3>
               <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                 {ar
-                  ? `أوسع ${dispersion.top.length} فجوات على مستوى المنتج، من أصل ${dispersion.comparedProducts.toLocaleString()} منتجاً قابلاً للمقارنة · أسماء المنافذ ظاهرة بالكامل`
-                  : `The widest ${dispersion.top.length} product-level gaps, out of ${dispersion.comparedProducts.toLocaleString()} products comparable · chain names shown in full`}
+                  ? `${items.length} صنفاً قابلاً للمقارنة عبر ${activeChainsLabel} · أسماء المنافذ ظاهرة بالكامل`
+                  : `${items.length} items comparable across ${activeChainsLabel} · chain names shown in full`}
               </p>
             </div>
-            <div className="overflow-x-auto scroll-thin">
+            <div className="overflow-x-auto scroll-thin max-h-[520px]">
               <table className="w-full text-sm">
-                <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60">
+                <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60 sticky top-0">
                   <tr>
-                    <th className="px-4 py-3 font-medium">{ar ? "المنتج" : "Product"}</th>
-                    {[...new Set(dispersion.top.flatMap((r) => Object.keys(r.byChain)))].sort().map((ch) => (
+                    <th className="px-4 py-3 font-medium">{ar ? "الصنف" : "Item"}</th>
+                    {[...new Set(items.flatMap((r) => Object.keys(r.unitByChain)))].sort().map((ch) => (
                       <th key={ch} className="px-4 py-3 font-medium text-right rtl:text-left">{ch}</th>
                     ))}
                     <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الفجوة" : "Gap"}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {dispersion.top.map((r) => {
-                    const allChains = [...new Set(dispersion.top.flatMap((x) => Object.keys(x.byChain)))].sort();
+                  {[...items].sort((a, b) => b.gapPct - a.gapPct).map((r) => {
+                    const allChains = [...new Set(items.flatMap((x) => Object.keys(x.unitByChain)))].sort();
                     return (
-                      <tr key={`${r.cpiItem}-${r.item}`} className="hover:bg-slate-50 transition-colors">
+                      <tr key={r.code} className="hover:bg-slate-50 transition-colors">
                         <td className="px-4 py-2.5">
-                          <div className="font-medium text-ink">{r.item}</div>
+                          <div className="font-medium text-ink">{r.cpi_item}</div>
                           <div className="text-xs text-slate-500">
-                            {r.cpiItem} · {r.category} · {ar ? "لكل" : "per"} {r.unit}
-                            {r.coverage === "partial" ? ` · ${ar ? "تغطية جزئية" : "partial coverage"}` : ""}
+                            {r.category} · {ar ? "لكل" : "per"} {r.unit}
                           </div>
                         </td>
                         {allChains.map((ch) => {
-                          const price = r.byChain[ch];
+                          const price = r.unitByChain[ch];
                           const isDear = ch === r.dearChain, isCheap = ch === r.cheapChain;
                           return (
                             <td key={ch} className={`px-4 py-2.5 text-right rtl:text-left font-mono ${isDear ? "text-cedar font-semibold" : isCheap ? "text-emerald-600" : "text-slate-400"}`}>
@@ -321,74 +313,15 @@ function InspectionWatch({ ar, data, dispersion }) {
       </div>
 
       {dispersion?.top?.length > 0 && (
-        <div className="mt-5 rounded-2xl border border-slate-200 bg-white overflow-hidden p-4">
-          <PriceDispersionRangeChart rows={dispersion.top} height={Math.max(280, dispersion.top.length * 42)} />
-        </div>
-      )}
-
-      {/* <div className="mt-5">
-        <FlagTable
-          ar={ar}
-          title={ar ? "أصناف شاذّة للتفتيش" : "Outlier items to inspect"}
-          sub={ar ? "نفس الصنف · موحّد على وحدته الفعلية · أغلى مقابل المتوسط الهندسي" : "Same item · standardized to its actual pack unit · dearest vs. geometric mean"}
-          cols={[ar ? "الصنف" : "Item", ar ? "الأغلى" : "Dearest", ar ? "الأرخص" : "Cheapest", ar ? "الفجوة" : "Gap"]}
-          rows={items.map((r) => (
-            <tr key={r.item} className="hover:bg-slate-50 transition-colors">
-              <td className="px-4 py-2.5">
-                <div className="text-ink">{r.item}</div>
-                <div className="text-xs text-slate-400">
-                  {r.category} · {ar ? "لكل" : "per"} {r.unit}
-                  {r.nChains < nActive ? ` · ${r.nChains}/${nActive} ${ar ? "منافذ" : "chains"}` : ""}
-                  {r.nProducts ? ` · ${r.nProducts} ${ar ? (r.nProducts === 1 ? "منتج مطابق" : "منتجات مطابقة") : r.nProducts === 1 ? "matched product" : "matched products"}` : ""}
-                </div>
-                {r.products?.length > 0 && (
-                  <div className="text-[11px] text-slate-400 mt-0.5 truncate max-w-md" title={r.products.join(", ")}>
-                    {ar ? "المنتجات: " : "Products: "}{r.products.join(", ")}
-                  </div>
-                )}
-              </td>
-              <td className="px-4 py-2.5"><span className="font-medium text-cedar">{r.dearCh}</span> <span className="font-mono text-xs text-slate-500">${r.dearP}</span></td>
-              <td className="px-4 py-2.5 text-right rtl:text-left"><span className="text-emerald-600">{r.cheapCh}</span> <span className="font-mono text-xs text-slate-500">${r.cheapP}</span></td>
-              <td className="px-4 py-2.5 text-right rtl:text-left font-mono font-semibold text-ink">+{r.gap}%</td>
-            </tr>
-          ))}
-        />
-      </div> */}
-
-      {partialCoverageProducts?.length > 0 && (
-        <div className="mt-5 rounded-2xl border border-amber-300/60 bg-amber-50/40 overflow-hidden">
-          <div className="px-5 py-4 border-b border-amber-200/60">
-            <h3 className="font-semibold text-ink">
-              {ar ? "منتجات بتغطية جزئية" : "Partial-coverage products"}
-            </h3>
-            <p className="text-xs text-slate-600 mt-0.5">
-              {ar
-                ? `موجودة في منفذين أو أكثر لكن ليس كل المنافذ النشطة (${activeChainsLabel}) — الفجوة معروضة للشفافية فقط، وغير مُدرجة في إجماليات الصنف أو الفئة.`
-                : `Found in 2+ chains but not all active chains (${activeChainsLabel}) — gap shown for transparency only, excluded from item/category totals.`}
-            </p>
-          </div>
-          <div className="overflow-x-auto scroll-thin">
-            <table className="w-full text-sm">
-              <thead className="text-left rtl:text-right text-slate-500 bg-amber-50/60">
-                <tr>
-                  <th className="px-4 py-3 font-medium">{ar ? "المنتج" : "Product"}</th>
-                  <th className="px-4 py-3 font-medium">{ar ? "المقارنة بين" : "Compared across"}</th>
-                  <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الفجوة" : "Gap"}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-amber-100">
-                {partialCoverageProducts.map((p) => (
-                  <tr key={`${p.code}-${p.productName}`}>
-                    <td className="px-4 py-2.5">
-                      <div className="text-ink">{p.productName}</div>
-                      <div className="text-xs text-slate-400">{p.cpi_item} · {p.category} · {ar ? "لكل" : "per"} {p.unit}</div>
-                    </td>
-                    <td className="px-4 py-2.5 text-xs text-slate-600">{p.chainsCompared.join(", ")}</td>
-                    <td className="px-4 py-2.5 text-right rtl:text-left font-mono font-semibold text-ink">+{p.gapPct}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="mt-5">
+          <h3 className="font-semibold text-ink mb-1">{ar ? "فجوات المنتجات — أوسع الحالات الفردية" : "Product gaps — the widest individual cases"}</h3>
+          <p className="text-xs text-slate-500 mb-3 max-w-3xl leading-relaxed">
+            {ar
+              ? `أوسع ${dispersion.top.length} فجوة على مستوى منتج فردي محدد (وليس متوسط الصنف)، من أصل ${dispersion.comparedProducts.toLocaleString()} منتجاً مسعّراً. كل شريط يقارن سعر هذا المنتج الفعلي بمتوسط سعر نفس الصنف لدى المنفذ الآخر.`
+              : `The widest ${dispersion.top.length} gaps at the level of a specific, individual product (not the item average), out of ${dispersion.comparedProducts.toLocaleString()} priced products. Each bar compares that product's real price to the other chain's average price for the same item.`}
+          </p>
+          <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden p-4">
+            <PriceDispersionRangeChart rows={dispersion.top} height={Math.max(280, dispersion.top.length * 42)} />
           </div>
         </div>
       )}
@@ -416,8 +349,9 @@ export default async function ProductsPage({ searchParams }) {
   }
 
   try {
-    forensic = getForensicWatch();
-    basketDispersion = getBasketPriceDispersion(10);
+    forensic = getForensicWatch({ topItems: 200 }); // effectively "all" credible items --
+      // the item-gap table now shows the full comparable set, not just a top-10 slice
+    basketDispersion = getBasketProductDispersion(25);
     dispStats = getBasketDispersionStats();
   } catch (err) {
     console.error("[app/products/page] failed to load basket data:", err);
@@ -427,7 +361,7 @@ export default async function ProductsPage({ searchParams }) {
   const ar = locale === "ar";
   return (
     <>
-      <TransparencyIntro ar={ar} meta={meta} dispStats={dispStats} />
+      <TransparencyIntro ar={ar} meta={meta} dispStats={dispStats} activeChains={forensic?.activeChains} />
       <InspectionWatch ar={ar} data={forensic} dispersion={basketDispersion} />
       <ProductsExplorer categories={categories} retailers={retailers} meta={meta} initialId={initialId} locale={locale} />
     </>

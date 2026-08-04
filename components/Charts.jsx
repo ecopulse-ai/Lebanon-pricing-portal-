@@ -60,10 +60,11 @@ export function CategoryTrendChart({ data, height = 280 }) {
   );
 }
 
-// Floating/range bar: one horizontal bar per item, spanning [cheapest, dearest]
-// unit price across the named chains, with the geometric-mean reference price
-// marked. Every chain's actual price is in the tooltip — nothing is withheld,
-// unlike the old anonymized Price Dispersion table this replaces.
+// Floating/range bar: one horizontal bar per row, spanning [cheapest, dearest]
+// price across the two points being compared, with every real price shown in
+// the tooltip — nothing withheld, nothing computed via geometric mean (that's
+// only ever used upstream, in build_basket.py, to combine multiple matched
+// products AT ONE CHAIN into a single price — never shown or labelled here).
 function DispersionTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const row = payload[0]?.payload;
@@ -79,8 +80,7 @@ function DispersionTooltip({ active, payload }) {
           <span>${price}</span>
         </div>
       ))}
-      <div style={{ marginTop: 6, opacity: 0.75 }}>Geometric mean: ${row.geoMean}</div>
-      <div style={{ opacity: 0.75 }}>Gap vs. geo. mean: +{row.gapPct}%</div>
+      <div style={{ marginTop: 6, opacity: 0.75 }}>Gap: +{row.gapPct}%</div>
     </div>
   );
 }

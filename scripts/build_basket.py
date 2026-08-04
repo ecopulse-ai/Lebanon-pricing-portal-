@@ -21,61 +21,60 @@ scraped on different days, so the "current" view takes each chain's MOST RECENT
 date — a cross-sectional basket, not a single-day cut. `trend[]` keeps every date
 so a time series accrues as the folder grows.
 
-── 2026-08 methodology change ──────────────────────────────────────────────
-1. cpi_code normalization: some exports (older Spinneys/Tawfeer files) write
-   the code as a float-formatted string ("11101.0") while others write it as
-   a plain string ("11101"). Left unnormalized, this silently prevents the
-   SAME cpi_code from ever being grouped across chains (confirmed: before this
-   fix, Tawfeer's 97 basket items had ZERO overlap with Carrefour/Spinneys on
-   any cpi_code, purely because of this formatting mismatch — not a real data
-   gap). Every code is now normalized by stripping a trailing ".0" at parse
-   time, uniformly, for every row from every file — so this class of bug can't
-   reoccur silently if a future export reintroduces it.
-2. Category assignment now comes ONLY from data/classes.csv, keyed by the
-   cpi_code's first 3 digits — not from each chain's own category text, which
-   is phrased differently per source and can't be trusted to align.
-3. Item-level gap = dearest chain's unit price vs. the GEOMETRIC MEAN of all
-   comparable chains' unit prices for that item (not the old dearest/cheapest
-   ratio). Rationale: with 3 chains now regularly comparable per item (after
-   fix #1), a raw dearest/cheapest ratio throws away the middle data point and
-   overweights whichever two chains happen to be furthest apart. The geometric
-   mean is the standard way to average price RATIOS/relatives (prices are
-   multiplicative quantities, not additive — this is the same reason
-   statistical agencies use geometric means, e.g. Jevons indices, for price
-   index construction) and uses all available chains' prices, not just two.
-4. Category-level gap = WEIGHTED AVERAGE of item-level gaps within the
-   category, weighted by each item's CPI importance weight (from the curated Excel catalog in
-   Azure SQL, InflationFoodSec_Lebanon). Weighted avg = sum(w_i * gap_i) /
-   sum(w_i) — dividing by the sum of weights ACTUALLY used automatically
-   renormalizes for any items excluded by the filters below, so there is no
-   separate renormalization step needed; it falls out of the standard
-   weighted-average formula.
-5. Only items present in ALL THREE chains are used in the gap calculations
-   (both item-level and category-level). This is enforced upstream, before
-   step 3, by intersecting cpi_codes across chains.
-6. Each item is standardized to its own ACTUAL pack unit (e.g. "900G", "1KG",
-   "30PCS") rather than a synthetic per-100 basis. When chains disagree on
-   pack size for the same item, the majority chain's reported size is used as
-   the reference quantity (tie -> falls back to the median size, logged).
-   Every chain's price is still mathematically scaled to that reference
-   quantity before comparison — changing the LABEL to a natural unit doesn't
-   remove the need to correct for real pack-size differences; skipping that
-   correction is exactly the bug this methodology change is fixing elsewhere,
-   so it is deliberately NOT skipped here.
-7. cpi_code/cpi_item is a CLASSIFICATION, not proof two chains' rows are the
-   same product — a chain routinely lists several different brands under one
-   code (e.g. multiple wheat brands under "Peeled Wheat"). Picking whichever
-   row happened to be cheapest per chain (the old approach) could silently
-   compare unrelated products that only share a broad category tag — e.g.
-   one real case: three chains' "Mamoul" rows were an oat-and-date snack bar,
-   a cereal cookie, and a ghraybeh (a different traditional cookie entirely),
-   which produced a large but meaningless "gap". Item selection now matches
-   on PRODUCT NAME similarity (word-overlap after stripping pack-size
-   tokens) across chains within a cpi_code, requiring every pair in the
-   matched triple to clear a similarity threshold — cpi_code narrows the
-   candidate pool, product name decides whether they're actually comparable.
-   If no combination of candidates is mutually similar enough, the item is
-   excluded (logged with the closest attempt), never guessed.
+── 2026-08 methodology (current) ────────────────────────────────────────────
+1. cpi_code normalization: some exports write the code as a float-formatted
+   string ("11101.0") while others write it as a plain string ("11101").
+   Every code is normalized by stripping a trailing ".0" at parse time,
+   uniformly, for every row from every file.
+2. Category assignment comes ONLY from data/classes.csv, keyed by the
+   cpi_code's first 3-digit prefix — not from each chain's own category text,
+   which is phrased differently per source and can't be trusted to align.
+3. ACTIVE_CHAINS (currently Carrefour + Spinneys) is a plain list — every
+   part of the matching/gap logic below is written generically for however
+   many chains are in it, nothing is hardcoded to 2 or 3. A chain not in the
+   list is excluded from this build entirely.
+4. Product matching, in priority order:
+   a. PRIMARY — a curated Excel-derived catalog (data/item_product_catalog.json):
+      for each cpi_code, the real, exact product names that officially
+      represent that item at each chain, plus an authoritative Base Unit.
+      Verbatim-matched against the actual basket rows. "Drop uncommon items
+      between retailers": a cpi_code is only used if EVERY active chain has
+      at least one real match — a chain with zero matches means the item
+      isn't comparable here, full stop, not partially comparable.
+   b. FALLBACK — name-similarity clustering (word-overlap after stripping
+      brand + pack-size tokens) for any cpi_code the catalog doesn't cover,
+      combined with the tolerance-based size resolution described below.
+      cpi_code/cpi_item is a CLASSIFICATION, not proof two chains' rows are
+      the same product (a chain can list several different brands under one
+      code) — this is why name similarity, not just a shared code, decides
+      whether two rows are actually comparable.
+5. Reference unit:
+   - Catalog-matched items use the catalog's own authoritative Base Unit —
+     every matched row is scaled to THIS fixed unit using its own real pack
+     size. This is deliberately NOT a size chains have to agree with each
+     other on; a 3L bottle and a 1.8L bottle both scale cleanly onto the same
+     basis without needing to be numerically close to each other first.
+   - Fallback-matched items have no catalog Base Unit, so the reference
+     quantity is resolved from whichever chains' actual sizes are mutually
+     within a tolerance ratio of each other (SIZE_TOLERANCE_RATIO) — chains
+     whose size is a real outlier are excluded from just that item, not
+     averaged into a synthetic size that matches no real product.
+   - A bare number with no unit (e.g. Spinneys recording "3" for a 3-litre
+     oil bottle) is not guessed in isolation — it's resolved ONLY when
+     another row for the SAME item has an explicit unit to infer the family
+     (mass/volume) from (see resolve_ambiguous_qty).
+6. Geometric mean is used in EXACTLY ONE place: when a chain has multiple
+   matched products (brands) for one item, their scaled prices are collapsed
+   into a single representative price for that chain via geometric mean.
+   Geometric mean is NEVER used to compute a gap. The item-level gap is a
+   PLAIN ratio between the two (possibly GM'd) chain prices: dearest / cheapest - 1.
+7. Category-level gap = WEIGHTED AVERAGE of item-level gaps within the
+   category, weighted by each item's real CPI importance weight (from the
+   same curated Excel catalog, not a live DB connection). Weighted avg =
+   sum(w_i * gap_i) / sum(w_i) — dividing by the sum of weights ACTUALLY used
+   automatically renormalizes for any items excluded upstream.
+8. Categories with zero comparable items are dropped from the output
+   entirely, not shown as a placeholder.
 
 Schema handled (both variants — Spinneys: `stock`; Carrefour: `stock`+`stock_status`):
   source, cpi_code, cpi_item, code, name, product_name, brand, weight, item_unit,
@@ -457,11 +456,21 @@ PACK_RE = re.compile(r"(\d+)\s*[x\u00d7]", re.I)
 
 
 def parse_qty(weight):
-    """Return (base_qty, family) where family in {mass, vol, count, None}.
-    base_qty is grams (mass), ml (vol) or pieces (count). None if not derivable."""
+    """Return (base_qty, family, ambiguous_raw).
+    base_qty is grams (mass), ml (vol) or pieces (count); family in
+    {mass, vol, count, None}; both None if not derivable at all.
+    ambiguous_raw carries a small bare number (<20, e.g. Spinneys recording
+    "3" for a 3-litre oil bottle) that COULD be a real quantity but whose
+    unit can't be told from the string alone -- kept (not discarded) so
+    cluster-level resolution can later infer it from sibling rows in the same
+    matched product that DO have an explicit unit (see resolve_ambiguous_qty
+    below). Confirmed necessary against real data: several Spinneys oil rows
+    record whole litres as a bare "2"/"3" with no unit token, which used to
+    be silently dropped as "ambiguous" even though every Carrefour sibling in
+    the same cluster explicitly says litres for the same item."""
     s = str(weight or "").strip().lower()
     if not s:
-        return (None, None)
+        return (None, None, None)
     pack = 1
     pm = PACK_RE.search(s)
     if pm:
@@ -485,18 +494,49 @@ def parse_qty(weight):
         elif u in ("pcs", "pc") or u.startswith("piece"):
             fam, base = "count", val
         else:
-            return (None, None)
+            return (None, None, None)
         base *= pack
-        return (base, fam) if base > 0 else (None, None)
+        return (base, fam, None) if base > 0 else (None, None, None)
     # Bare number: treat as a base quantity in g/ml only when it's clearly one
-    # (>= 20). Smaller bare numbers are ambiguous (kg / L / a count) — skip
-    # rather than guess, since guessing wrong here silently mixes mass and
-    # volume in a "same unit" comparison later.
+    # (>= 20). Smaller bare numbers are ambiguous (kg / L / a count) -- never
+    # guessed here; returned as ambiguous_raw for cluster-context resolution.
     try:
         v = float(s.replace(",", "")) * pack
     except ValueError:
-        return (None, None)
-    return (v, None) if v >= 20 else (None, None)
+        return (None, None, None)
+    if v >= 20:
+        return (v, None, None)
+    return (None, None, v if v > 0 else None)
+
+
+def resolve_ambiguous_qty(chain_rows):
+    """Second pass over a matched cluster's rows (chain_rows: {chain: [rows]}):
+    any row with an ambiguous small bare number (base_qty=None, ambigQty set)
+    gets resolved IF the cluster has a confident family from at least one
+    OTHER row with an explicit unit (mass or vol; count isn't in scope -- a
+    bare small count is not the same ambiguity). Resolution treats the bare
+    number as the "large" unit (kg for mass, L for vol) rather than the base
+    unit (g/ml) -- e.g. a bare "3" alongside explicit-litre siblings becomes
+    3000 (ml), not 3 -- since a bare number this small basically never means
+    3g/3ml of a real product, but very plausibly means 3kg/3L. Mutates rows
+    in place (base_qty/family) for any row it resolves; does nothing if no
+    confident family is available (row stays unusable, as before)."""
+    confident = Counter(
+        r["family"] for rows in chain_rows.values() for r in rows
+        if r.get("family") in ("mass", "vol")
+    )
+    if not confident:
+        return
+    fam = confident.most_common(1)[0][0]
+    resolved = 0
+    for rows in chain_rows.values():
+        for r in rows:
+            if r.get("base_qty") is None and r.get("ambigQty") is not None:
+                r["base_qty"] = r["ambigQty"] * 1000
+                r["family"] = fam
+                resolved += 1
+    if resolved:
+        log(f"    resolved {resolved} ambiguous bare-number size(s) as '{fam}' from sibling context")
 
 
 def format_ref_unit(base_qty, family):
@@ -529,9 +569,10 @@ for path in files:
             continue                                   # unpriced row — skip
         code = norm_code(row.get("cpi_code"))
         cat_name, cat_code = category_for(code) if code else ("Uncategorized", "")
-        bq, fam = parse_qty(row.get("weight"))
+        bq, fam, ambig_qty = parse_qty(row.get("weight"))
         records.append({
             "chain": chain_of(row),
+            "ambigQty": ambig_qty,
             "date": (row.get("date") or "").strip(),
             "cpi_code": code,
             "cpi_item": (row.get("cpi_item") or "").strip(),
@@ -711,24 +752,28 @@ for c in chains:
 chain_list.sort(key=lambda x: -x["items"])
 
 
-# ── Product level, then Item level: two-tier GM-anchored gap ─────────────────
-# See module docstring's 2026-08 section for the full methodology. Summary:
-#   1. Within a cpi_code, cluster rows into PRODUCTS by brand-agnostic name
-#      similarity (a product can span multiple brands at one chain).
-#   2. Per product, per chain: if the chain has multiple rows in the cluster
-#      (multiple brands), keep only brands that also appear at every OTHER
-#      chain present for this product (brand intersection) -- fall back to
-#      using all of that chain's rows only if no brand is common anywhere.
-#      Collapse to one price per chain via geometric mean.
-#   3. Product-level gap = dearest chain price vs. GM of all chains' prices.
-#      A product needs >=2 chains to get a gap at all. If it's found in ALL
-#      of ACTIVE_CHAINS that's "full" coverage and it feeds the item-level
-#      rollup below; if found in a strict subset (only possible once a 3rd+
-#      chain is active) that's "partial" coverage -- still shown on its own,
-#      explicitly labelled, but excluded from item/category aggregation.
-#   4. Item level: geometric-mean the FULL-coverage products' per-chain prices
-#      to get one price per chain for the whole cpi_item, then the same
-#      dearest-vs-GM gap formula again.
+# ── Item-level gap: unified per-chain price via GM, then a PLAIN ratio ───────
+# 2026-08 rewrite. Summary:
+#   1. PRIMARY matcher: the curated Excel catalog. For a cpi_code it covers,
+#      every chain's list of officially-listed products is verbatim-matched
+#      against the real basket rows; an item is only used if EVERY active
+#      chain has at least one real match ("drop uncommon items between
+#      retailers" -- a chain with zero matches means this item isn't
+#      comparable here at all, full stop, not partially comparable).
+#      Prices are scaled to the catalog's own authoritative Base Unit (not a
+#      unit inferred from whatever sizes happen to be on sale) -- this is
+#      what lets genuinely different real pack sizes (e.g. a 3L bottle vs a
+#      1.8L and a 5L option) still compare fairly on a common basis, instead
+#      of being excluded for "disagreeing" on size.
+#   2. FALLBACK: for any cpi_code the catalog doesn't cover, the older name-
+#      similarity clustering + tolerance-based size resolution still applies.
+#   3. Geometric mean is used in EXACTLY ONE place: collapsing multiple
+#      matched products (different brands) AT ONE CHAIN into a single
+#      representative price for that chain. It is NEVER used to compute the
+#      gap itself.
+#   4. The item-level gap is a PLAIN ratio between the two chains' (possibly
+#      GM'd) prices: dearest chain's price / cheapest chain's price - 1.
+#      No geometric mean is involved in this step.
 NUM_ACTIVE = len(ACTIVE_CHAINS)
 
 # ── Product matching, PRIMARY source: curated Excel catalog ─────────────────
@@ -746,6 +791,46 @@ EXCEL_CHAIN_KEY = {"Carrefour": "carrefour", "Spinneys": "spinneys"}  # extend
     # this mapping (not the matching logic) if the catalog spreadsheet ever
     # adds another chain's column.
 
+BASE_UNIT_RE = re.compile(
+    r"(\d+(?:[.,]\d+)?)\s*(kgs?|kg|g|gm|gr|grams?|mg|l|lt|ltr|liters?|litres?|ml|cl|cc|"
+    r"pcs?|pieces?|pack|packs|bar|bars|bundle|bundles|bag|bags|loaf|loaves)\b",
+    re.I,
+)
+COUNT_WORDS = {"pcs", "pc", "pieces", "piece", "pack", "packs", "bar", "bars",
+                "bundle", "bundles", "bag", "bags", "loaf", "loaves"}
+
+
+def parse_base_unit(text):
+    """Parse the Excel's 'Base Unit' column (e.g. '1.5 L', '100 gm', '10 Kg',
+    '4 pcs') into (base_qty, family). Takes the FIRST number+unit match --
+    several entries have messy multi-value text ('155 g, 160 g', '1 Kg,1 M3')
+    where taking the first is the safest read, not an attempt to reconcile
+    conflicting values. Returns (None, None) if nothing matches at all (the
+    caller falls back to the old tolerance-based size resolution for that
+    item, same as if the catalog didn't cover it)."""
+    if not text:
+        return (None, None)
+    m = BASE_UNIT_RE.search(text.strip().lower())
+    if not m:
+        return (None, None)
+    val = float(m.group(1).replace(",", "."))
+    u = m.group(2)
+    if u.startswith("kg"):
+        return (val * 1000, "mass")
+    if u in ("g", "gm", "gr") or u.startswith("gram"):
+        return (val, "mass")
+    if u == "mg":
+        return (val * 0.001, "mass")
+    if u in ("l", "lt", "ltr") or u.startswith(("liter", "litre")):
+        return (val * 1000, "vol")
+    if u == "cl":
+        return (val * 10, "vol")
+    if u in ("ml", "cc"):
+        return (val, "vol")
+    if u in COUNT_WORDS:
+        return (val, "count")
+    return (None, None)
+
 
 def load_item_catalog():
     if not os.path.exists(ITEM_CATALOG_FILE):
@@ -759,14 +844,23 @@ def load_item_catalog():
                   f"name-similarity clustering for ALL items.")
         return {}
     catalog = {}
+    no_base_unit = 0
     for r in rows:
         by_chain = {}
         for chain, key in EXCEL_CHAIN_KEY.items():
             names = {n.strip().lower() for n in (r.get(key) or []) if n and n.strip()}
             if names:
                 by_chain[chain] = names
-        if by_chain:
-            catalog[r["code"]] = by_chain
+        if not by_chain:
+            continue
+        ref_qty, family = parse_base_unit(r.get("baseUnit"))
+        if ref_qty is None:
+            no_base_unit += 1
+        catalog[r["code"]] = {"byChain": by_chain, "refQty": ref_qty, "family": family,
+                               "baseUnitRaw": r.get("baseUnit")}
+    if no_base_unit:
+        log_warn(f"{no_base_unit} catalog item(s) have a product list but no parseable Base Unit -- "
+                  f"those fall through to the name-similarity/tolerance-based fallback for sizing.")
     log(f"loaded item-product catalog: {len(catalog)} cpi_codes with a curated product list "
         f"from {ITEM_CATALOG_FILE}")
     return catalog
@@ -775,19 +869,25 @@ def load_item_catalog():
 ITEM_CATALOG = load_item_catalog()
 
 
-def catalog_cluster(code, rs):
-    """Try to build ONE cluster (all chains' officially-listed products for
-    this cpi_code) using the curated catalog. Returns a cluster (list of
-    rows) if >=2 chains had at least one real, verbatim-matching row, else
-    None (caller should fall back to cluster_products)."""
-    wanted = ITEM_CATALOG.get(code)
-    if not wanted:
+def scale_price(row, ref_qty):
+    """Scale a row's price to ref_qty using its own parsed pack size. None if
+    the row has no usable size."""
+    bq = row.get("base_qty")
+    if not bq or bq <= 0:
         return None
-    matched = [r for r in rs if r["chain"] in wanted and r["product"].strip().lower() in wanted[r["chain"]]]
-    chains_hit = {r["chain"] for r in matched}
-    if len(chains_hit) < 2:
+    return round(row["price"] / bq * ref_qty, 4)
+
+
+def gm_or_single(values):
+    """Geometric mean if there's more than one value, else just the value.
+    THIS is the only place geometric mean is used anywhere in this script:
+    collapsing multiple matched products (brands) AT ONE CHAIN into a single
+    representative price for that chain. It has nothing to do with computing
+    the gap itself -- see the plain dear/cheap ratio below."""
+    values = [v for v in values if v and v > 0]
+    if not values:
         return None
-    return matched
+    return values[0] if len(values) == 1 else geo_mean(values)
 
 
 item_groups = defaultdict(list)
@@ -795,9 +895,12 @@ for r in current:
     if r["chain"] in ACTIVE_CHAINS and r["cpi_code"]:
         item_groups[r["cpi_code"]].append(r)
 
-products = []           # every product with a valid >=2-chain gap (full AND partial)
-items = []              # item-level rollups (full-coverage products only)
-skipped_products = []   # clusters that never produced a usable gap, for auditing
+products = []            # every individual matched product's own scaled price
+                          # -- display/graph only, NEVER used to compute item
+                          # or category gaps (those use the GM'd chain price).
+items = []                # item-level rollups: gap = plain (dear/cheap - 1)
+                          # between the two chains' GM'd prices.
+skipped_items = []
 catalog_matched_codes = 0
 fallback_matched_codes = 0
 
@@ -805,212 +908,176 @@ for code, rs in item_groups.items():
     item_label = rs[0]["cpi_item"]
     category = rs[0]["category"]
 
-    catalog_result = catalog_cluster(code, rs)
-    if catalog_result is not None:
-        clusters = [catalog_result]
-        catalog_matched_codes += 1
-    else:
-        clusters = cluster_products(rs)
-        fallback_matched_codes += 1
-    item_full_products = []
+    chain_rows = None   # {chain: [rows]}, once resolved
+    ref_qty = None
+    family = None
+    match_source = None
 
-    for cluster in clusters:
-        by_chain_rows = defaultdict(list)
-        for r in cluster:
-            by_chain_rows[r["chain"]].append(r)
-        chains_present = sorted(by_chain_rows)
-        if len(chains_present) < 2:
-            continue  # nothing to compare this product against -- not even worth logging, too common/noisy
-
-        # Brand intersection: only meaningful if EVERY chain present has
-        # brand data on its rows in this cluster. If any chain's rows lack
-        # brand info entirely, we can't compute a fair intersection -- fall
-        # through to using all rows (logged).
-        brand_sets = {ch: {r["brand"] for r in by_chain_rows[ch] if r["brand"]} for ch in chains_present}
-        all_have_brands = all(brand_sets[ch] for ch in chains_present)
-        common_brands = set.intersection(*brand_sets.values()) if all_have_brands else set()
-        any_inferred = any(r.get("brandInferred") for r in cluster if r["brand"] in common_brands) if common_brands else False
-
-        chain_rows_used = {}
-        brand_note = None
-        if common_brands:
-            for ch in chains_present:
-                filtered = [r for r in by_chain_rows[ch] if r["brand"] in common_brands]
-                chain_rows_used[ch] = filtered
-            brand_note = f"brand-intersected on: {sorted(common_brands)}"
-            if any_inferred:
-                brand_note += " (at least one side's brand was INFERRED from the product name, not from the source CSV)"
-        else:
-            for ch in chains_present:
-                chain_rows_used[ch] = by_chain_rows[ch]
-            if any(len(by_chain_rows[ch]) > 1 for ch in chains_present):
-                brand_note = "no brand common to every chain present -- used all available rows per chain"
-
-        # Need a parseable size on at least one row per chain to compute a
-        # fair per-unit price; drop rows that can't be sized, drop a chain
-        # entirely if NONE of its rows for this product can be sized.
-        sizeable = {ch: [r for r in chain_rows_used[ch] if r["base_qty"]] for ch in chains_present}
-        sizeable = {ch: rs_ for ch, rs_ in sizeable.items() if rs_}
-        if len(sizeable) < 2:
-            skipped_products.append((code, item_label, {"reason": "fewer than 2 chains had a parseable size for this product cluster"}))
-            continue
-
-        all_valid_rows = [r for rs_ in sizeable.values() for r in rs_]
-        fam_counts = Counter(r["family"] for r in all_valid_rows if r["family"])
-        family = fam_counts.most_common(1)[0][0] if fam_counts else None
-
-        ref_qty, chains_for_size = resolve_reference_qty(sizeable)
-        if ref_qty is None:
-            skipped_products.append((code, item_label, {
-                "reason": f"no 2+ chains had sizes within {SIZE_TOLERANCE_RATIO}x of each other -- "
-                          f"treated as not the same product",
-                "sizesSeen": {ch: [r["base_qty"] for r in rs_] for ch, rs_ in sizeable.items()},
-            }))
-            continue
-        dropped_as_outlier = set(sizeable) - chains_for_size
-        if dropped_as_outlier:
-            log(f"item '{item_label}' ({code}): {sorted(dropped_as_outlier)} dropped as a size outlier "
-                f"(>{SIZE_TOLERANCE_RATIO}x from the {len(chains_for_size)}-chain group used: "
-                f"{sorted(chains_for_size)}) -- product gap uses only the agreeing chains.")
-        sizeable = {ch: rs_ for ch, rs_ in sizeable.items() if ch in chains_for_size}
-        if len(sizeable) < 2:
-            continue  # shouldn't happen (resolve_reference_qty already required >=2), but guard anyway
-
-        chain_unit_price = {}
-        for ch, rows_ in sizeable.items():
-            ups = [round(r["price"] / r["base_qty"] * ref_qty, 3) for r in rows_ if r["base_qty"] > 0]
-            ups = [u for u in ups if u > 0]
-            if not ups:
-                continue
-            chain_unit_price[ch] = round(geo_mean(ups), 3) if len(ups) > 1 else ups[0]
-
-        if len(chain_unit_price) < 2:
-            skipped_products.append((code, item_label, {"reason": "fewer than 2 chains had a usable unit price after brand/size filtering"}))
-            continue
-
-        gm = geo_mean(list(chain_unit_price.values()))
-        if not gm:
-            continue
-        dear_ch = max(chain_unit_price, key=chain_unit_price.get)
-        cheap_ch = min(chain_unit_price, key=chain_unit_price.get)
-        gap = round((chain_unit_price[dear_ch] / gm - 1) * 100)
-
-        coverage = "full" if len(chain_unit_price) == NUM_ACTIVE else "partial"
-        # Display name from the rows ACTUALLY used for pricing (post brand-
-        # intersection and size-filtering) -- not the raw cluster, which can
-        # still contain other brands that got excluded from the price itself.
-        # Using the raw cluster here was a real bug: it could label a product
-        # "Deroni Egyptian Rice" while the price shown was actually Zain's,
-        # because Zain (not Deroni) was the brand common to both chains.
-        priced_rows = [r for rows_ in sizeable.values() for r in rows_]
-        name_counts = Counter(r["product"] for r in priced_rows)
-        product_name = name_counts.most_common(1)[0][0]
-
-        product_record = {
-            "code": code,
-            "cpi_item": item_label,
-            "category": category,
-            "productName": product_name,
-            "unit": format_ref_unit(ref_qty, family),
-            "unitByChain": dict(sorted(chain_unit_price.items())),
-            "geoMeanUnitPrice": round(gm, 3),
-            "dearChain": dear_ch, "dearUnitPrice": chain_unit_price[dear_ch],
-            "cheapChain": cheap_ch, "cheapUnitPrice": chain_unit_price[cheap_ch],
-            "gapPct": gap,
-            "chainsCompared": sorted(chain_unit_price),
-            "coverage": coverage,   # "full" (all ACTIVE_CHAINS) | "partial" (subset, >=2)
-            "brandNote": brand_note,
-            "matchSource": "catalog" if catalog_result is not None else "clustering",
+    # ── PRIMARY: curated Excel catalog, with its own authoritative Base Unit.
+    # "Drop uncommon items between retailers": an item is only usable if
+    # EVERY active chain has at least one real, verbatim-matched row from the
+    # catalog's list for that chain -- a chain with zero matches means this
+    # item isn't comparable at all here, not partially comparable.
+    cat_entry = ITEM_CATALOG.get(code)
+    if cat_entry and cat_entry["refQty"]:
+        wanted = cat_entry["byChain"]
+        candidate = {
+            ch: [r for r in rs if r["chain"] == ch and r["product"].strip().lower() in wanted.get(ch, set())]
+            for ch in ACTIVE_CHAINS
         }
-        products.append(product_record)
-        if coverage == "full":
-            item_full_products.append(product_record)
+        if all(candidate.get(ch) for ch in ACTIVE_CHAINS):
+            # Same sibling-context resolution as the fallback path uses (see
+            # resolve_ambiguous_qty above) -- was previously only wired into
+            # the fallback path, silently leaving bare ambiguous numbers
+            # (e.g. Spinneys recording "1" for a 1kg item) unresolved here
+            # even when the OTHER chain's row in the SAME item has an
+            # explicit unit to infer from.
+            resolve_ambiguous_qty(candidate)
+            chain_rows = candidate
+            ref_qty, family = cat_entry["refQty"], cat_entry["family"]
+            match_source = "catalog"
+            catalog_matched_codes += 1
 
-    # ── Item-level rollup: GM the full-coverage products' per-chain prices ──
-    if not item_full_products:
+    # ── FALLBACK: name-similarity clustering + the tolerance-based size
+    # resolution from before, only reached when the catalog doesn't cover
+    # this item (or its match didn't survive verbatim-matching above).
+    if chain_rows is None:
+        best, best_score = None, -1
+        for cluster in cluster_products(rs):
+            by_chain_rows = defaultdict(list)
+            for r in cluster:
+                by_chain_rows[r["chain"]].append(r)
+            if not all(by_chain_rows.get(ch) for ch in ACTIVE_CHAINS):
+                continue
+            resolve_ambiguous_qty(by_chain_rows)
+            sizeable = {ch: [r for r in rows_ if r["base_qty"]] for ch, rows_ in by_chain_rows.items()}
+            if not all(sizeable.get(ch) for ch in ACTIVE_CHAINS):
+                continue
+            rq, chains_for_size = resolve_reference_qty(sizeable)
+            if rq is None:
+                continue
+            sizeable = {ch: rs_ for ch, rs_ in sizeable.items() if ch in chains_for_size}
+            if not all(sizeable.get(ch) for ch in ACTIVE_CHAINS):
+                continue
+            score = sum(len(v) for v in sizeable.values())  # prefer the best-evidenced cluster
+            if score > best_score:
+                best_score, best = score, (sizeable, rq)
+        if best:
+            chain_rows, ref_qty = best
+            all_rows = [r for rows_ in chain_rows.values() for r in rows_]
+            fam_counts = Counter(r["family"] for r in all_rows if r["family"])
+            family = fam_counts.most_common(1)[0][0] if fam_counts else None
+            match_source = "clustering"
+            fallback_matched_codes += 1
+
+    if chain_rows is None:
+        skipped_items.append((code, item_label, "no >=2-chain match via catalog or clustering fallback"))
         continue
-    chain_item_prices = defaultdict(list)
-    for p in item_full_products:
-        for ch, up in p["unitByChain"].items():
-            chain_item_prices[ch].append(up)
-    item_chain_price = {ch: geo_mean(ups) for ch, ups in chain_item_prices.items() if ups}
-    item_chain_price = {ch: v for ch, v in item_chain_price.items() if v}
-    if len(item_chain_price) != NUM_ACTIVE:
-        continue  # a product-level chain dropout shouldn't happen given "full" already
-                  # required all ACTIVE_CHAINS, but guard anyway rather than assume
 
-    gm_item = geo_mean(list(item_chain_price.values()))
-    if not gm_item:
+    unit_label = format_ref_unit(ref_qty, family)
+
+    # ── Product-level (display/graph only): each matched row's own scaled
+    # price. No GM, no gap math here -- just what each real listing costs on
+    # a common basis.
+    for ch, rows_ in chain_rows.items():
+        for r in rows_:
+            up = scale_price(r, ref_qty)
+            if up is None:
+                continue
+            products.append({
+                "code": code, "cpi_item": item_label, "category": category,
+                "chain": ch, "productName": r["product"], "unit": unit_label,
+                "unitPrice": up, "matchSource": match_source,
+            })
+
+    # ── Item-level: GM collapses each chain's matched products into ONE
+    # price; the gap is then a PLAIN ratio between the two chains' prices --
+    # geometric mean plays no further role past this point.
+    chain_price = {}
+    for ch, rows_ in chain_rows.items():
+        prices = [scale_price(r, ref_qty) for r in rows_]
+        gm = gm_or_single(prices)
+        if gm:
+            chain_price[ch] = round(gm, 3)
+
+    if len(chain_price) < 2:
+        skipped_items.append((code, item_label, f"fewer than 2 chains had a usable price after unit scaling: {chain_price}"))
         continue
-    dear_ch = max(item_chain_price, key=item_chain_price.get)
-    cheap_ch = min(item_chain_price, key=item_chain_price.get)
-    gap_item = round((item_chain_price[dear_ch] / gm_item - 1) * 100)
 
-    units_seen = {p["unit"] for p in item_full_products}
-    unit_label = next(iter(units_seen)) if len(units_seen) == 1 else f"mixed units across {len(item_full_products)} products"
+    dear_ch = max(chain_price, key=chain_price.get)
+    cheap_ch = min(chain_price, key=chain_price.get)
+    dear_p, cheap_p = chain_price[dear_ch], chain_price[cheap_ch]
+    if cheap_p <= 0:
+        continue
+    gap = round((dear_p / cheap_p - 1) * 100)
 
     items.append({
-        "code": code,
-        "cpi_item": item_label,
-        "category": category,
+        "code": code, "cpi_item": item_label, "category": category,
         "unit": unit_label,
-        "unitByChain": {ch: round(v, 3) for ch, v in item_chain_price.items()},
-        "geoMeanUnitPrice": round(gm_item, 3),
-        "dearChain": dear_ch, "dearUnitPrice": round(item_chain_price[dear_ch], 3),
-        "cheapChain": cheap_ch, "cheapUnitPrice": round(item_chain_price[cheap_ch], 3),
-        "gapPct": gap_item,
-        "nChains": len(item_chain_price),
-        "nProducts": len(item_full_products),
+        "unitByChain": chain_price,
+        "dearChain": dear_ch, "dearUnitPrice": dear_p,
+        "cheapChain": cheap_ch, "cheapUnitPrice": cheap_p,
+        "gapPct": gap,
+        "nChains": len(chain_price),
+        "matchSource": match_source,
         "weight": ITEM_WEIGHTS.get(code),
-        "products": [p["productName"] for p in item_full_products],
+        "nProductsByChain": {ch: len(rows_) for ch, rows_ in chain_rows.items()},
     })
 
-if skipped_products:
-    log_warn(f"{len(skipped_products)} product-cluster(s) never produced a usable >=2-chain gap:")
-    for code, label, detail in skipped_products[:15]:
-        log_warn(f"    {code} '{label}': {detail}")
-    if len(skipped_products) > 15:
-        log_warn(f"    ...and {len(skipped_products) - 15} more")
+if skipped_items:
+    log_warn(f"{len(skipped_items)} cpi_code(s) never produced a usable item-level gap:")
+    for code, label, reason in skipped_items[:15]:
+        log_warn(f"    {code} '{label}': {reason}")
+    if len(skipped_items) > 15:
+        log_warn(f"    ...and {len(skipped_items) - 15} more")
 
-partial_count = sum(1 for p in products if p["coverage"] == "partial")
-log(f"{len(products)} product-level gaps computed ({len(products) - partial_count} full coverage across "
-    f"all {NUM_ACTIVE} active chains, {partial_count} partial -- shown individually but excluded from "
-    f"item/category rollups)")
-catalog_products = sum(1 for p in products if p["matchSource"] == "catalog")
-log(f"matching source: {catalog_matched_codes} cpi_codes matched via the curated catalog "
-    f"({catalog_products} products), {fallback_matched_codes} fell back to name-similarity clustering")
+log(f"matching source: {catalog_matched_codes} cpi_codes matched via the curated catalog, "
+    f"{fallback_matched_codes} via name-similarity clustering fallback")
+log(f"{len(items)} item-level gaps computed; {len(products)} individual product prices recorded (display only)")
 
 items.sort(key=lambda x: x["code"])
 products.sort(key=lambda x: (x["code"], x["productName"]))
-
-# Credible band — same 10-150% window as before, now applied to the GM-anchored
-# gap. Outside it, treat as a different-grade/format product, not a real markup.
+# Credible band — same 10-150% window as before, now applied to the plain
+# dear/cheap ratio (no geometric mean involved in the gap itself -- see the
+# module docstring's 2026-08 section). Outside it, treat as a different-
+# grade/format product, not a real markup.
 flagged = [it for it in items if it["gapPct"] is not None and CREDIBLE_GAP_LO <= it["gapPct"] <= CREDIBLE_GAP_HI]
-log(f"{len(items)} items with a valid full-coverage GM gap (across all {NUM_ACTIVE} active chains); "
-    f"{len(flagged)} inside the credible {CREDIBLE_GAP_LO}-{CREDIBLE_GAP_HI}% band")
+log(f"{len(items)} items with a valid gap; {len(flagged)} inside the credible "
+    f"{CREDIBLE_GAP_LO}-{CREDIBLE_GAP_HI}% band")
 
-# Chain rollups — mean premium & dearest-item count, computed ONLY over flagged
-# items (so a chain with zero comparable/credible items shows no premium rather
-# than a fabricated one).
+# Chain rollups — mean premium & dearest-item count, computed ONLY over
+# flagged items (so a chain with zero comparable/credible items shows no
+# premium rather than a fabricated one). Premium per item = this chain's
+# price vs. the AVERAGE of every other chain's price for that same item --
+# a plain ratio, not geometric-mean-anchored (with exactly 2 active chains,
+# "average of every other chain" is just the one other chain's price; this
+# form is written to generalize cleanly once a 3rd+ chain is active, without
+# reintroducing geometric mean into the premium calculation).
 cAgg = {}
 for it in flagged:
-    gm = it["geoMeanUnitPrice"]
-    for ch, up in it["unitByChain"].items():
+    prices = it["unitByChain"]
+    chs = list(prices)
+    for ch in chs:
+        others = [prices[o] for o in chs if o != ch]
+        if not others:
+            continue
+        other_avg = sum(others) / len(others)
+        if other_avg <= 0:
+            continue
         a = cAgg.setdefault(ch, {"items": 0, "dearest": 0, "premSum": 0.0})
         a["items"] += 1
-        a["premSum"] += (up / gm - 1)
+        a["premSum"] += (prices[ch] / other_avg - 1)
     cAgg[it["dearChain"]]["dearest"] += 1
 
-# Product-level participation per chain (ALL products, not just the credible-
-# band item subset above) -- surfaces the actual two-tier methodology (product
-# match, then item rollup) and how each product was matched: ground-truth
-# catalog vs. name-similarity clustering fallback.
+# Product-level participation per chain -- `products` is now a flat list of
+# individual (item, chain, product) price records (see the main loop above),
+# not cross-chain comparison pairs, so this just counts how many such records
+# exist per chain and how each item they belong to was matched.
 pAgg = {}
 for p in products:
-    for ch in p["chainsCompared"]:
-        a = pAgg.setdefault(ch, {"products": 0, "catalog": 0, "clustering": 0})
-        a["products"] += 1
-        a[p["matchSource"]] += 1
+    a = pAgg.setdefault(p["chain"], {"products": 0, "catalog": 0, "clustering": 0})
+    a["products"] += 1
+    a[p["matchSource"]] += 1
 
 for c in chain_list:
     a = cAgg.get(c["name"])
@@ -1035,6 +1102,7 @@ for it in items:  # use ALL items with a valid gap, not just "flagged", so every
 
 all_category_names = sorted(set(CLASSES.values()) | set(cat_items.keys()))
 category_gaps = []
+dropped_empty_categories = 0
 for cat_name in all_category_names:
     its = cat_items.get(cat_name, [])
     weighted_pairs = [(it["gapPct"], it["weight"] if it["weight"] is not None else 1.0) for it in its]
@@ -1054,20 +1122,15 @@ for cat_name in all_category_names:
             "dearest": dearest, "cheapest": cheapest,
             "gapPct": weighted_gap,
             "needsReview": weighted_gap >= CATEGORY_FLAG_THRESHOLD,
-            "insufficientData": False,
         })
     else:
-        category_gaps.append({
-            "category": cat_name,
-            "code": code_for_name,
-            "nItems": 0,
-            "usingEqualWeights": USING_EQUAL_WEIGHTS,
-            "dearest": None, "cheapest": None,
-            "gapPct": None,
-            "needsReview": False,
-            "insufficientData": True,
-        })
-category_gaps.sort(key=lambda c: (c["gapPct"] is None, -(c["gapPct"] or 0)))
+        # Categories with zero comparable items are dropped entirely, not
+        # shown with a placeholder -- per instruction, only categories with
+        # real data appear on the page at all.
+        dropped_empty_categories += 1
+category_gaps.sort(key=lambda c: -c["gapPct"])
+log(f"{len(category_gaps)} categories with real data shown; {dropped_empty_categories} dropped "
+    f"(zero comparable items -- not displayed at all, per instruction)")
 if USING_EQUAL_WEIGHTS:
     log_warn("category gapPct values above are an UNWEIGHTED average (equal "
               "weights) -- the item catalog weights were not available at build time.")
@@ -1127,11 +1190,13 @@ out = {
                  "different days, so the current view takes each chain's most recent date "
                  "(cross-sectional, not a single-day cut). Effective price uses the "
                  "discounted price where one is shown. Gap calculations only use ACTIVE_CHAINS "
-                 "(currently: " + ", ".join(ACTIVE_CHAINS) + "). Product gap = dearest chain vs. "
-                 "geometric mean of a matched product's chain prices (brand-intersected where "
-                 "a chain carries multiple brands); item gap = geometric mean of its full-"
-                 "coverage products' prices, same dearest-vs-GM formula one level up; category "
-                 "gap = weighted average of item gaps by CPI weight from the curated Excel catalog."),
+                 "(currently: " + ", ".join(ACTIVE_CHAINS) + "). Products are matched via a "
+                 "curated catalog of real product names per item (verbatim-matched against "
+                 "the live basket), each scaled to that item's real base unit. Geometric mean "
+                 "is used only to combine multiple matched products AT ONE CHAIN into a single "
+                 "price for that chain; the item gap is a plain ratio between the two chains' "
+                 "prices (dearest / cheapest - 1). Category gap = weighted average of item "
+                 "gaps by CPI weight from the curated Excel catalog."),
     },
     "kpis": {
         "itemsTracked": len({r["cpi_code"] for r in current if r["chain"] in ACTIVE_CHAINS}),
@@ -1142,9 +1207,7 @@ out = {
         "basketMean": mean(cur_prices),
         "inStockRate": round(100 * sum(r["in_stock"] for r in current) / len(current), 1),
         "discountedSharePct": round(100 * sum(r["discounted"] for r in current) / len(current), 1),
-        "comparableProducts": len(products),
-        "fullCoverageProducts": sum(1 for p in products if p["coverage"] == "full"),
-        "partialCoverageProducts": sum(1 for p in products if p["coverage"] == "partial"),
+        "productPrices": len(products),
         "comparableItems": len(items),
         "flaggedItems": len(flagged),
     },
@@ -1166,8 +1229,7 @@ k = out["kpis"]
 log(f"Wrote {OUT}  ({os.path.getsize(OUT)} bytes)")
 log(f"files={len(files)}  rows={len(records)}  current-rows={len(current)}")
 log(f"chains={chains}  activeChains={ACTIVE_CHAINS}  dates={all_dates}  latest={latest_date}")
-log(f"products={k['comparableProducts']} (full={k['fullCoverageProducts']}, partial={k['partialCoverageProducts']})  "
-    f"comparableItems={k['comparableItems']}  flaggedItems={k['flaggedItems']}")
+log(f"productPrices={k['productPrices']}  comparableItems={k['comparableItems']}  flaggedItems={k['flaggedItems']}")
 log(f"categories={k['categories']}  categoryGaps rows={len(category_gaps)} (needsReview={sum(c['needsReview'] for c in category_gaps)})")
 log(f"basketMedian=${k['basketMedian']}  inStock={k['inStockRate']}%  discounted={k['discountedSharePct']}%")
 if USING_EQUAL_WEIGHTS:
