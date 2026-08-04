@@ -59,7 +59,9 @@ function TransparencyIntro({ ar, meta, dispStats }) {
 
 function ChainFlagCard({ ar, c, topName }) {
   const flagged = c.name === topName;
-  const hasComparison = c.avgPremiumPct != null;
+  const hasComparison = c.avgPremiumPct != null && c.itemsCompared > 0;
+  const dearestSharePct = hasComparison ? Math.round((c.dearestItems / c.itemsCompared) * 100) : null;
+
   return (
     <div className={`rounded-2xl border p-5 ${flagged ? "border-cedar/40 bg-cedar/5" : "border-slate-200 bg-white"}`}>
       <div className="flex items-center justify-between">
@@ -70,14 +72,21 @@ function ChainFlagCard({ ar, c, topName }) {
           </span>
         )}
       </div>
+
+      {/* ── Cross-chain comparison ── how this chain stacks up against the others */}
       {hasComparison ? (
         <>
-          <div className={`mt-2 text-2xl font-bold font-mono ${c.avgPremiumPct > 0 ? "text-cedar" : "text-ink"}`}>
-            {c.avgPremiumPct > 0 ? "+" : ""}{c.avgPremiumPct}%
+          <div className={`mt-2 text-2xl font-bold font-mono ${dearestSharePct >= 50 ? "text-cedar" : "text-ink"}`}>
+            {dearestSharePct}%
           </div>
-          <div className="text-xs text-slate-500">{ar ? "علاوة وسطية لكل صنف مقابل المتوسط الهندسي" : "avg premium per item vs. geometric mean"}</div>
-          <div className="mt-2 text-xs text-slate-500">
-            {ar ? "الأغلى في" : "dearest on"} {c.dearestItems}/{c.itemsCompared} {ar ? "صنفاً" : "items"}
+          <div className="text-xs text-slate-500">
+            {ar
+              ? `الأغلى في ${c.dearestItems} من ${c.itemsCompared} صنفاً قابلاً للمقارنة`
+              : `dearest on ${c.dearestItems} of ${c.itemsCompared} comparable items`}
+          </div>
+          <div className="mt-2 text-sm font-mono text-ink">
+            {c.avgPremiumPct > 0 ? "+" : ""}{c.avgPremiumPct}%
+            <span className="text-xs text-slate-500 font-sans"> {ar ? "متوسط فرق السعر على تلك الأصناف" : "average price gap, on those items"}</span>
           </div>
         </>
       ) : (
@@ -90,26 +99,34 @@ function ChainFlagCard({ ar, c, topName }) {
           </div>
         </>
       )}
+
       {c.productsCompared > 0 && (
-        <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 flex justify-between">
-          <span>{ar ? "منتجات مقارَنة" : "products compared"}</span>
+        <div className="mt-2 text-xs text-slate-500 flex justify-between">
+          <span>{ar ? "منتجات مطابَقة" : "products matched"}</span>
           <span className="font-mono text-ink">
             {c.productsCompared}
-            <span className="text-slate-400"> ({c.catalogMatched} {ar ? "قائمة موثّقة" : "catalog"}{c.clusteringMatched > 0 ? `, ${c.clusteringMatched} ${ar ? "تشابه أسماء" : "clustering"}` : ""})</span>
+            <span className="text-slate-400 font-sans"> ({c.catalogMatched} {ar ? "من قائمة موثّقة" : "confirmed"}{c.clusteringMatched > 0 ? `, ${c.clusteringMatched} ${ar ? "بتشابه الاسم" : "inferred"}` : ""})</span>
           </span>
         </div>
       )}
-      <div className={`${c.productsCompared > 0 ? "" : "mt-3 pt-3 border-t border-slate-100"} text-xs text-slate-500 flex justify-between`}>
-        <span>{ar ? "أصناف مرصودة" : "items tracked"}</span>
-        <span className="font-mono text-ink">{c.items}</span>
-      </div>
-      <div className="text-xs text-slate-500 flex justify-between mt-1">
-        <span>{ar ? "السعر الوسيط" : "median price"}</span>
-        <span className="font-mono text-ink">${c.medianPrice?.toFixed(2)}</span>
-      </div>
-      <div className="text-xs text-slate-500 flex justify-between mt-1">
-        <span>{ar ? "نسبة التوفر" : "in stock"}</span>
-        <span className="font-mono text-ink">{c.inStockRate}%</span>
+
+      {/* ── This chain's own basket ── size/coverage stats, independent of any comparison */}
+      <div className="mt-3 pt-3 border-t border-slate-100">
+        <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-1.5">
+          {ar ? "سلّة هذا المنفذ" : "This chain's basket"}
+        </div>
+        <div className="text-xs text-slate-500 flex justify-between">
+          <span>{ar ? "أصناف مرصودة" : "items tracked"}</span>
+          <span className="font-mono text-ink">{c.items}</span>
+        </div>
+        <div className="text-xs text-slate-500 flex justify-between mt-1">
+          <span>{ar ? "السعر الوسيط" : "median price"}</span>
+          <span className="font-mono text-ink">${c.medianPrice?.toFixed(2)}</span>
+        </div>
+        <div className="text-xs text-slate-500 flex justify-between mt-1">
+          <span>{ar ? "نسبة التوفر" : "in stock"}</span>
+          <span className="font-mono text-ink">{c.inStockRate}%</span>
+        </div>
       </div>
     </div>
   );
