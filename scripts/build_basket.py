@@ -44,7 +44,7 @@ so a time series accrues as the folder grows.
    statistical agencies use geometric means, e.g. Jevons indices, for price
    index construction) and uses all available chains' prices, not just two.
 4. Category-level gap = WEIGHTED AVERAGE of item-level gaps within the
-   category, weighted by each item's CPI importance weight (NonCoreItemBreakdown.Share in
+   category, weighted by each item's CPI importance weight (from the curated Excel catalog in
    Azure SQL, InflationFoodSec_Lebanon). Weighted avg = sum(w_i * gap_i) /
    sum(w_i) — dividing by the sum of weights ACTUALLY used automatically
    renormalizes for any items excluded by the filters below, so there is no
@@ -601,36 +601,48 @@ if chain_latest and len(set(chain_latest.values())) > 1:
               f"chains may partly reflect time elapsed, not just a price difference.")
 
 
-# ── Fetch CPI item weights (Azure SQL, NonCoreItemBreakdown.Share) for the weighted category
-#    gap. See lib/azure/itemWeights.js / azure-function/item_weights_api for the
-#    live path. Falls back to EQUAL weights (loudly logged) if unavailable, so
-#    a missing/broken connection degrades to an unweighted average rather than
-#    silently fabricating differentiated weights.
-def fetch_item_weights():
-    url = os.environ.get("AZURE_ITEM_WEIGHTS_FUNCTION_URL")
-    key = os.environ.get("AZURE_ITEM_WEIGHTS_FUNCTION_KEY")
-    if not url or not key:
-        log_warn("AZURE_ITEM_WEIGHTS_FUNCTION_URL/_KEY not set -- category gaps "
-                  "will use EQUAL weights (a plain unweighted average), NOT real "
-                  "CPI importance weights, until this is wired up. See "
-                  "azure-function/item_weights_api/ for the endpoint to deploy "
-                  "and grant, matching the existing cpi_api pattern.")
+# ── CPI item weights, from the curated Excel catalog (data/item_product_catalog.json) ──
+# 2026-08: switched from the Azure SQL NonCoreItemBreakdown.Share connection
+# to this. The same spreadsheet that supplies the primary product matching
+# (see ITEM_CATALOG below) also carries each leaf item's real CPI weight,
+# already verified against the classes.csv category hierarchy (the weights
+# roll up correctly to each 3-digit category's total, e.g. "Bread and
+# cereals" = 2.07255, matching the sum of its leaf items). No live DB
+# connection needed for this anymore. The Azure Function
+# (azure-function/item_weights_api) and lib/azure/itemWeights.js are left in
+# the repo but are no longer called from here -- kept in case a live DB path
+# is wanted again later, not deleted.
+#
+# Falls back to EQUAL weights (loudly logged) only if the catalog file itself
+# is missing or a given code has no weight value -- never fabricates one.
+ITEM_CATALOG_FILE = "data/item_product_catalog.json"
+
+
+def load_item_weights():
+    if not os.path.exists(ITEM_CATALOG_FILE):
+        log_warn(f"{ITEM_CATALOG_FILE} not found -- category gaps will use EQUAL "
+                  f"weights (a plain unweighted average), NOT real CPI importance weights.")
         return {}
     try:
-        import urllib.request
-        req = urllib.request.Request(f"{url}?code={key}")
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read())
-        weights = {norm_code(str(r.get("code"))): float(r["weight"])
-                   for r in data if r.get("code") is not None and r.get("weight") is not None}
-        log(f"fetched {len(weights)} item weights from Azure SQL (NonCoreItemBreakdown.Share)")
-        return weights
+        rows = json.load(open(ITEM_CATALOG_FILE, encoding="utf-8"))
     except Exception as e:
-        log_warn(f"item-weights fetch failed ({e!r}) -- falling back to EQUAL weights.")
+        log_warn(f"could not load {ITEM_CATALOG_FILE} for weights: {e!r} -- falling back to EQUAL weights.")
         return {}
+    weights = {}
+    for r in rows:
+        w = r.get("weight")
+        if w is not None:
+            weights[norm_code(str(r["code"]))] = float(w)
+    missing = len(rows) - len(weights)
+    if missing:
+        log_warn(f"{missing} catalog item(s) have no weight value -- those items will fall back "
+                  f"to equal weighting individually within their category (see weighted-average "
+                  f"formula: an item with no weight contributes nothing, not a fabricated one).")
+    log(f"loaded {len(weights)} real CPI item weights from {ITEM_CATALOG_FILE}")
+    return weights
 
 
-ITEM_WEIGHTS = fetch_item_weights()
+ITEM_WEIGHTS = load_item_weights()
 USING_EQUAL_WEIGHTS = len(ITEM_WEIGHTS) == 0
 
 
@@ -692,6 +704,9 @@ for c in chains:
         "itemsCompared": 0,
         "dearestItems": 0,
         "avgPremiumPct": None,   # null, not 0 — 0 would falsely read as "no premium"
+        "productsCompared": 0,
+        "catalogMatched": 0,
+        "clusteringMatched": 0,
     })
 chain_list.sort(key=lambda x: -x["items"])
 
@@ -716,6 +731,65 @@ chain_list.sort(key=lambda x: -x["items"])
 #      dearest-vs-GM gap formula again.
 NUM_ACTIVE = len(ACTIVE_CHAINS)
 
+# ── Product matching, PRIMARY source: curated Excel catalog ─────────────────
+# 2026-08: replaces name-similarity clustering as the primary way products are
+# matched across chains. data/item_product_catalog.json is extracted from a
+# hand-curated spreadsheet (per cpi_code: the exact, real product names that
+# officially represent that item at each retailer) -- verified directly
+# against the actual basket CSVs before adopting this: 85% of its Spinneys
+# names and 78% of its Carrefour names match a real row VERBATIM, covering
+# 156 of 162 leaf CPI items. This is ground truth, not inferred similarity --
+# used whenever it produces a usable match (>=2 chains with >=1 real row).
+# cluster_products() (name-similarity) remains the FALLBACK for any cpi_code
+# the catalog doesn't cover, or where matching fails for other reasons.
+EXCEL_CHAIN_KEY = {"Carrefour": "carrefour", "Spinneys": "spinneys"}  # extend
+    # this mapping (not the matching logic) if the catalog spreadsheet ever
+    # adds another chain's column.
+
+
+def load_item_catalog():
+    if not os.path.exists(ITEM_CATALOG_FILE):
+        log_warn(f"{ITEM_CATALOG_FILE} not found -- falling back to name-similarity "
+                  f"clustering for ALL items, not just uncovered ones.")
+        return {}
+    try:
+        rows = json.load(open(ITEM_CATALOG_FILE, encoding="utf-8"))
+    except Exception as e:
+        log_warn(f"could not load {ITEM_CATALOG_FILE}: {e!r} -- falling back to "
+                  f"name-similarity clustering for ALL items.")
+        return {}
+    catalog = {}
+    for r in rows:
+        by_chain = {}
+        for chain, key in EXCEL_CHAIN_KEY.items():
+            names = {n.strip().lower() for n in (r.get(key) or []) if n and n.strip()}
+            if names:
+                by_chain[chain] = names
+        if by_chain:
+            catalog[r["code"]] = by_chain
+    log(f"loaded item-product catalog: {len(catalog)} cpi_codes with a curated product list "
+        f"from {ITEM_CATALOG_FILE}")
+    return catalog
+
+
+ITEM_CATALOG = load_item_catalog()
+
+
+def catalog_cluster(code, rs):
+    """Try to build ONE cluster (all chains' officially-listed products for
+    this cpi_code) using the curated catalog. Returns a cluster (list of
+    rows) if >=2 chains had at least one real, verbatim-matching row, else
+    None (caller should fall back to cluster_products)."""
+    wanted = ITEM_CATALOG.get(code)
+    if not wanted:
+        return None
+    matched = [r for r in rs if r["chain"] in wanted and r["product"].strip().lower() in wanted[r["chain"]]]
+    chains_hit = {r["chain"] for r in matched}
+    if len(chains_hit) < 2:
+        return None
+    return matched
+
+
 item_groups = defaultdict(list)
 for r in current:
     if r["chain"] in ACTIVE_CHAINS and r["cpi_code"]:
@@ -724,12 +798,20 @@ for r in current:
 products = []           # every product with a valid >=2-chain gap (full AND partial)
 items = []              # item-level rollups (full-coverage products only)
 skipped_products = []   # clusters that never produced a usable gap, for auditing
+catalog_matched_codes = 0
+fallback_matched_codes = 0
 
 for code, rs in item_groups.items():
     item_label = rs[0]["cpi_item"]
     category = rs[0]["category"]
 
-    clusters = cluster_products(rs)
+    catalog_result = catalog_cluster(code, rs)
+    if catalog_result is not None:
+        clusters = [catalog_result]
+        catalog_matched_codes += 1
+    else:
+        clusters = cluster_products(rs)
+        fallback_matched_codes += 1
     item_full_products = []
 
     for cluster in clusters:
@@ -838,6 +920,7 @@ for code, rs in item_groups.items():
             "chainsCompared": sorted(chain_unit_price),
             "coverage": coverage,   # "full" (all ACTIVE_CHAINS) | "partial" (subset, >=2)
             "brandNote": brand_note,
+            "matchSource": "catalog" if catalog_result is not None else "clustering",
         }
         products.append(product_record)
         if coverage == "full":
@@ -893,6 +976,9 @@ partial_count = sum(1 for p in products if p["coverage"] == "partial")
 log(f"{len(products)} product-level gaps computed ({len(products) - partial_count} full coverage across "
     f"all {NUM_ACTIVE} active chains, {partial_count} partial -- shown individually but excluded from "
     f"item/category rollups)")
+catalog_products = sum(1 for p in products if p["matchSource"] == "catalog")
+log(f"matching source: {catalog_matched_codes} cpi_codes matched via the curated catalog "
+    f"({catalog_products} products), {fallback_matched_codes} fell back to name-similarity clustering")
 
 items.sort(key=lambda x: x["code"])
 products.sort(key=lambda x: (x["code"], x["productName"]))
@@ -915,6 +1001,17 @@ for it in flagged:
         a["premSum"] += (up / gm - 1)
     cAgg[it["dearChain"]]["dearest"] += 1
 
+# Product-level participation per chain (ALL products, not just the credible-
+# band item subset above) -- surfaces the actual two-tier methodology (product
+# match, then item rollup) and how each product was matched: ground-truth
+# catalog vs. name-similarity clustering fallback.
+pAgg = {}
+for p in products:
+    for ch in p["chainsCompared"]:
+        a = pAgg.setdefault(ch, {"products": 0, "catalog": 0, "clustering": 0})
+        a["products"] += 1
+        a[p["matchSource"]] += 1
+
 for c in chain_list:
     a = cAgg.get(c["name"])
     if a and a["items"]:
@@ -923,9 +1020,13 @@ for c in chain_list:
         c["avgPremiumPct"] = round((a["premSum"] / a["items"]) * 100)
     # else: leave the zero/None defaults set above — this chain has no
     # comparable+credible items yet, which is a true statement, not a 0% gap.
+    p_a = pAgg.get(c["name"])
+    c["productsCompared"] = p_a["products"] if p_a else 0
+    c["catalogMatched"] = p_a["catalog"] if p_a else 0
+    c["clusteringMatched"] = p_a["clustering"] if p_a else 0
 
 
-# ── Category-level: WEIGHTED average of item gaps (weight = NonCoreItemBreakdown.Share) ────
+# ── Category-level: WEIGHTED average of item gaps (weight = curated Excel catalog) ────
 cat_items = defaultdict(list)
 for it in items:  # use ALL items with a valid gap, not just "flagged", so every
                    # category gets a number; the flag decides if it's "concerning"
@@ -969,7 +1070,7 @@ for cat_name in all_category_names:
 category_gaps.sort(key=lambda c: (c["gapPct"] is None, -(c["gapPct"] or 0)))
 if USING_EQUAL_WEIGHTS:
     log_warn("category gapPct values above are an UNWEIGHTED average (equal "
-              "weights) -- real NonCoreItemBreakdown.Share was not available at build time.")
+              "weights) -- the item catalog weights were not available at build time.")
 
 
 # Cheapest vs dearest chain per category (all current rows, descriptive KPI —
@@ -1019,6 +1120,9 @@ out = {
         "currency": "USD",
         "latestDate": latest_date,
         "usingEqualWeights": USING_EQUAL_WEIGHTS,
+        "itemCatalogCodes": len(ITEM_CATALOG),
+        "catalogMatchedCodes": catalog_matched_codes,
+        "fallbackMatchedCodes": fallback_matched_codes,
         "note": ("CPI-mapped retail basket across Lebanese chains. Chains are scraped on "
                  "different days, so the current view takes each chain's most recent date "
                  "(cross-sectional, not a single-day cut). Effective price uses the "
@@ -1027,7 +1131,7 @@ out = {
                  "geometric mean of a matched product's chain prices (brand-intersected where "
                  "a chain carries multiple brands); item gap = geometric mean of its full-"
                  "coverage products' prices, same dearest-vs-GM formula one level up; category "
-                 "gap = weighted average of item gaps by CPI weight (NonCoreItemBreakdown.Share)."),
+                 "gap = weighted average of item gaps by CPI weight from the curated Excel catalog."),
     },
     "kpis": {
         "itemsTracked": len({r["cpi_code"] for r in current if r["chain"] in ACTIVE_CHAINS}),
@@ -1067,5 +1171,5 @@ log(f"products={k['comparableProducts']} (full={k['fullCoverageProducts']}, part
 log(f"categories={k['categories']}  categoryGaps rows={len(category_gaps)} (needsReview={sum(c['needsReview'] for c in category_gaps)})")
 log(f"basketMedian=${k['basketMedian']}  inStock={k['inStockRate']}%  discounted={k['discountedSharePct']}%")
 if USING_EQUAL_WEIGHTS:
-    log_warn("REMINDER: category gaps used EQUAL weights, not real NonCoreItemBreakdown.Share. "
+    log_warn("REMINDER: category gaps used EQUAL weights, not the real catalog weights (data/item_product_catalog.json). "
               "Set AZURE_ITEM_WEIGHTS_FUNCTION_URL/_KEY and re-run once the endpoint is live.")

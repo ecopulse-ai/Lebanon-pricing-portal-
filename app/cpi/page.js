@@ -72,7 +72,7 @@ export default async function CpiPage() {
                 <tr>
                   <th className="px-5 py-3 font-medium">{ar ? "الفئة" : "Category"}</th>
                   <th className="px-5 py-3 font-medium text-right rtl:text-left">{ar ? "المؤشّر" : "Index"}</th>
-                  <th className="px-5 py-3 font-medium text-right rtl:text-left">{ar ? "يومي" : "DoD"}</th>
+                  <th className="px-5 py-3 font-medium text-right rtl:text-left">{ar ? "التضخّم اليومي" : "DoD Inflation"}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
