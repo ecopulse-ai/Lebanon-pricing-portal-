@@ -96,7 +96,7 @@ export function PriceDispersionRangeChart({ rows, height = 420 }) {
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 0 }} barCategoryGap={14}>
         <CartesianGrid stroke={GRID} horizontal={false} />
         <XAxis type="number" domain={[0, Math.ceil(maxVal * 1.15 * 100) / 100]} tick={axisTick} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
-        <YAxis type="category" dataKey="item" reversed tick={axisTick} tickLine={false} axisLine={false} width={150} />
+        <YAxis type="category" dataKey="item" tick={axisTick} tickLine={false} axisLine={false} width={150} />
         <Tooltip content={<DispersionTooltip />} cursor={{ fill: "rgba(31,92,60,0.06)" }} />
         <Bar dataKey="range" radius={[4, 4, 4, 4]} barSize={16}>
           {data.map((_, i) => <Cell key={i} fill={CEDAR} fillOpacity={0.85} />)}
