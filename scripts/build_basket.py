@@ -96,6 +96,24 @@ ACTIVE_CHAINS = ["Carrefour", "Spinneys"]  # Chains currently included in gap
     # hardcoded to 2 or 3. A chain NOT in this list is dropped entirely from
     # this build (no KPI card, no gap participation) -- see the filter applied
     # to `records` right after parsing.
+
+# Items with a CONFIRMED source-data problem that can't be safely auto-
+# corrected -- excluded explicitly (with a real, checked reason) rather than
+# silently producing a wrong number. Add to this list only after actually
+# tracing the raw data, never as a guess.
+EXCLUDED_ITEM_CODES = {
+    # Spinneys' bottled-water listings (Rim, Tannourine, Sohat) are real
+    # multipacks -- confirmed via their own URLs ("...12x500ml", "...6x1.5L")
+    # -- but the weight field only records ONE bottle's size while price is
+    # for the WHOLE box. No structured field carries the real pack count (only
+    # a URL-slug hint, too fragile to parse reliably), so this can't be fixed
+    # by better parsing here -- it needs a source-data/scraper fix. Left in
+    # unexcluded, this produced a 1523% "gap" that was actually box-price vs
+    # bottle-price, not a real price difference.
+    "12201": "Spinneys listings are multipacks (12x500ml / 6x1.5L per the product URLs) priced as a box, "
+             "but the weight field only records one bottle's size -- price/size math is not comparable "
+             "to Carrefour's genuine single-bottle prices until the source data captures the real pack count.",
+}
 CREDIBLE_GAP_LO, CREDIBLE_GAP_HI = 10, 150   # unchanged from before
 CATEGORY_FLAG_THRESHOLD = 10  # % — a category is flagged "needs review" at/above
                                # this weighted gap. Chosen to match the existing
@@ -928,6 +946,10 @@ fallback_matched_codes = 0
 for code, rs in item_groups.items():
     item_label = rs[0]["cpi_item"]
     category = rs[0]["category"]
+
+    if code in EXCLUDED_ITEM_CODES:
+        skipped_items.append((code, item_label, f"excluded (confirmed data issue): {EXCLUDED_ITEM_CODES[code]}"))
+        continue
 
     chain_rows = None   # {chain: [rows]}, once resolved
     ref_qty = None
