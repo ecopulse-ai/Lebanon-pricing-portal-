@@ -247,15 +247,14 @@ function InspectionWatch({ ar, data, dispersion }) {
         <p className="text-sm sm:text-[15px] text-ink leading-relaxed">{advice}</p>
       </div>
 
-      <div className="mt-5">
+      <div className="mt-5 grid lg:grid-cols-2 gap-5 items-start">
         <AllCategoriesTable ar={ar} rows={categoryGaps} />
-      </div>
 
-      {dispersion?.top?.length > 0 && (
-        <div className="mt-5">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-semibold text-ink">{ar ? "فجوات المنتجات — نفس المنتج، سعر مختلف" : "Product gaps — the same product, a different price"}</h3>
-          </div>
+        {dispersion?.top?.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-semibold text-ink">{ar ? "فجوات المنتجات — نفس المنتج، سعر مختلف" : "Product gaps — the same product, a different price"}</h3>
+            </div>
           <p className="text-xs text-slate-500 mb-3 max-w-3xl leading-relaxed">
             {ar
               ? `أوسع ${dispersion.top.length} فجوات على مستوى المنتج، من أصل ${dispersion.comparedProducts.toLocaleString()} منتجاً قابلاً للمقارنة (المصدر: سلّة أسعار المتاجر المسمّاة). أسماء المنافذ ظاهرة بالكامل — لا حجب.`
@@ -305,8 +304,9 @@ function InspectionWatch({ ar, data, dispersion }) {
               </table>
             </div>
           </div>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* <div className="mt-5">
         <FlagTable
