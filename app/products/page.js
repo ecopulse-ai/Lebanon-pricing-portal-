@@ -251,19 +251,15 @@ function InspectionWatch({ ar, data, dispersion }) {
         <AllCategoriesTable ar={ar} rows={categoryGaps} />
 
         {dispersion?.top?.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-semibold text-ink">{ar ? "فجوات المنتجات — نفس المنتج، سعر مختلف" : "Product gaps — the same product, a different price"}</h3>
+          <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100">
+              <h3 className="font-semibold text-ink">{ar ? "فجوات المنتجات" : "Product gaps"}</h3>
+              <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                {ar
+                  ? `أوسع ${dispersion.top.length} فجوات على مستوى المنتج، من أصل ${dispersion.comparedProducts.toLocaleString()} منتجاً قابلاً للمقارنة · أسماء المنافذ ظاهرة بالكامل`
+                  : `The widest ${dispersion.top.length} product-level gaps, out of ${dispersion.comparedProducts.toLocaleString()} products comparable · chain names shown in full`}
+              </p>
             </div>
-          <p className="text-xs text-slate-500 mb-3 max-w-3xl leading-relaxed">
-            {ar
-              ? `أوسع ${dispersion.top.length} فجوات على مستوى المنتج، من أصل ${dispersion.comparedProducts.toLocaleString()} منتجاً قابلاً للمقارنة (المصدر: سلّة أسعار المتاجر المسمّاة). أسماء المنافذ ظاهرة بالكامل — لا حجب.`
-              : `The widest ${dispersion.top.length} product-level gaps, out of ${dispersion.comparedProducts.toLocaleString()} products comparable (source: the named-chain basket). Chain names shown in full — nothing withheld.`}
-          </p>
-          <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden p-4">
-            <PriceDispersionRangeChart rows={dispersion.top} height={Math.max(280, dispersion.top.length * 42)} />
-          </div>
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-white overflow-hidden">
             <div className="overflow-x-auto scroll-thin">
               <table className="w-full text-sm">
                 <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60">
@@ -304,9 +300,14 @@ function InspectionWatch({ ar, data, dispersion }) {
               </table>
             </div>
           </div>
-          </div>
         )}
       </div>
+
+      {dispersion?.top?.length > 0 && (
+        <div className="mt-5 rounded-2xl border border-slate-200 bg-white overflow-hidden p-4">
+          <PriceDispersionRangeChart rows={dispersion.top} height={Math.max(280, dispersion.top.length * 42)} />
+        </div>
+      )}
 
       {/* <div className="mt-5">
         <FlagTable
