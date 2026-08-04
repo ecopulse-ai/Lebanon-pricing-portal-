@@ -275,7 +275,7 @@ function InspectionWatch({ ar, data, dispersion }) {
                 <thead className="text-left rtl:text-right text-slate-500 bg-slate-50/60 sticky top-0">
                   <tr>
                     <th className="px-4 py-3 font-medium">{ar ? "الصنف" : "Item"}</th>
-                    {[...new Set(items.flatMap((r) => Object.keys(r.unitByChain)))].sort().map((ch) => (
+                    {[...new Set(items.flatMap((r) => Object.keys(r.unitByChain || {})))].sort().map((ch) => (
                       <th key={ch} className="px-4 py-3 font-medium text-right rtl:text-left">{ch}</th>
                     ))}
                     <th className="px-4 py-3 font-medium text-right rtl:text-left">{ar ? "الفجوة" : "Gap"}</th>
@@ -283,7 +283,7 @@ function InspectionWatch({ ar, data, dispersion }) {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {[...items].sort((a, b) => b.gapPct - a.gapPct).map((r) => {
-                    const allChains = [...new Set(items.flatMap((x) => Object.keys(x.unitByChain)))].sort();
+                    const allChains = [...new Set(items.flatMap((x) => Object.keys(x.unitByChain || {})))].sort();
                     return (
                       <tr key={r.code} className="hover:bg-slate-50 transition-colors">
                         <td className="px-4 py-2.5">
