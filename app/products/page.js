@@ -317,7 +317,7 @@ function InspectionWatch({ ar, data, dispersion }) {
           <p className="text-xs text-slate-500 mb-3 max-w-3xl leading-relaxed">
             {ar
               ? `أوسع ${dispersion.top.length} فجوة على مستوى منتج فردي محدد (وليس متوسط الصنف)، من أصل ${dispersion.comparedProducts.toLocaleString()} منتجاً مسعّراً. كل شريط يقارن سعر هذا المنتج الفعلي بمتوسط سعر نفس الصنف لدى المنفذ الآخر.`
-              : `The widest ${dispersion.top.length} gaps at the level of a specific, individual product (not the item average), out of ${dispersion.comparedProducts.toLocaleString()} priced products. Each bar compares that product's real price to the other chain's average price for the same item.`}
+              : `The widest ${dispersion.top.length} gaps at the level of a specific, individual product (not the item average). Each bar compares that product's real price to the other chain's average price for the same item.`}
           </p>
           <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden p-4">
             <PriceDispersionRangeChart rows={dispersion.top} height={Math.max(280, dispersion.top.length * 42)} />
