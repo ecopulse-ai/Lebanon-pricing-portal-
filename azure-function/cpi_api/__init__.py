@@ -26,7 +26,7 @@ import pyodbc
 CONN_STR = (
     "Driver={ODBC Driver 18 for SQL Server};"
     "Server=tcp:ecopulse-sql-server.database.windows.net,1433;"
-    "Database=InflationFoodSec_Lebanon;"   # ← was a placeholder, fix this
+    "Database=InflationFoodSec_Lebanon;"
     "Authentication=ActiveDirectoryMsi;"
     "Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
 )
